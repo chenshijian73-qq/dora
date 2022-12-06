@@ -19,7 +19,7 @@ var csvCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&jsonFile, "jsonFile", "j", "", "指定 json 文件")
-	rootCmd.PersistentFlags().StringVarP(&outFile, "outFile", "o", "", "指定 输出文件名")
+	csvCmd.PersistentFlags().StringVarP(&jsonFile, "jsonFile", "j", "", "指定 json 文件")
+	csvCmd.PersistentFlags().StringVarP(&outFile, "outFile", "o", "", "指定 输出文件名")
 	rootCmd.AddCommand(csvCmd)
 }

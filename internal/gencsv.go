@@ -49,7 +49,3 @@ func createFileAppendText(filename string, text string) {
 		panic(err)
 	}
 }
-
-//func Yaml2Csv(yamlFile, outFile string) {
-//
-//}

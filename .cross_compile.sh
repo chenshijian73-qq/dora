@@ -9,7 +9,7 @@ COMMIT_SHA1=$(git rev-parse HEAD)
 TARGET_DIR="dist"
 TARGET_NAME="dora"
 PLATFORMS="darwin/amd64 darwin/arm64 linux/386 linux/amd64 linux/arm linux/arm64"
-COMMANDS="json2csv version"
+COMMANDS="json2csv version ctx sprint"
 
 rm -rf ${TARGET_DIR}
 mkdir ${TARGET_DIR}
