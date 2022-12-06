@@ -6,7 +6,9 @@ import (
 	common "github.com/chenshijian73-qq/Doraemon/pkg"
 	"github.com/olekukonko/tablewriter"
 	"os"
+	"os/signal"
 	"sort"
+	"syscall"
 )
 
 // ListServers merge basic context servers and current context servers
@@ -48,6 +50,38 @@ func PrintServerDetail(serverName string) {
 	table.Append([]string{"PROXY", s.Proxy})
 	table.Append([]string{"CONFIG", s.ConfigPath})
 	table.Render()
+}
+
+// SingleLogin open a single server interactive terminal
+// If running in the tmux environment, mmh will automatically update the tmux window name
+func SingleLogin(name string) {
+	s, err := findServerByName(name)
+	common.CheckAndExit(err)
+	var tmuxWinIndex, tmuxWinName string
+	var tmuxAutoRename bool
+	if common.Tmux() {
+		tmuxWinIndex, tmuxWinName = common.TmuxWindowInfo()
+		tmuxAutoRename = common.TmuxAutomaticRename()
+		common.TmuxSetWindowName(tmuxWinIndex, s.Name)
+		common.TmuxSetAutomaticRename(tmuxWinIndex, false)
+	}
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sig
+		if common.Tmux() {
+			common.TmuxSetWindowName(tmuxWinIndex, tmuxWinName)
+			common.TmuxSetAutomaticRename(tmuxWinIndex, tmuxAutoRename)
+		}
+		os.Exit(1)
+	}()
+
+	common.PrintErrWithPrefix("\n😱", s.Terminal())
+	if common.Tmux() {
+		common.TmuxSetWindowName(tmuxWinIndex, tmuxWinName)
+		common.TmuxSetAutomaticRename(tmuxWinIndex, tmuxAutoRename)
+	}
 }
 
 // findServerByName find server from config by server name
