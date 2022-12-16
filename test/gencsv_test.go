@@ -13,7 +13,6 @@ var (
 	outputFile  string
 	outputDelim string
 	printHeader bool
-	keys        internal.StringArray
 )
 
 func init() {
@@ -21,7 +20,6 @@ func init() {
 	flag.StringVar(&outputFile, "out", "", "/path/to/output.csv (optional; default is stdout)")
 	flag.StringVar(&outputDelim, "d", ",", "delimiter used for output values")
 	flag.BoolVar(&printHeader, "p", false, "prints header to output")
-	flag.Var(&keys, "k", "fields to output")
 }
 
 func TestMain(m *testing.M) {
@@ -29,7 +27,15 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func Test_json2csv(t *testing.T) {
-	fmt.Println(inputFile, outputFile, keys)
-	internal.Json2Csv(inputFile, outputFile)
+//func Test_json2csv(t *testing.T) {
+//	fmt.Println(inputFile, outputFile)
+//	internal.Json2Csv(inputFile, outputFile)
+//}
+
+func Test_yaml2csv(t *testing.T) {
+	fmt.Println(inputFile, outputFile)
+	_, csv := internal.YamlToCsv(inputFile, outputFile)
+	if csv != nil {
+		return
+	}
 }

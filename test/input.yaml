@@ -1,0 +1,26 @@
+- App: Instagram
+  Company:
+    - Facebook
+    - xxxix
+    - yyy
+  Category: Social Media
+- App: Instagram
+  Company: ''
+  Category: Social Media2
+- App: WeChat
+  Company:
+    - ''
+    - Tencent
+  Category: Social Media
+- App: Hotstar
+  Company:
+    - Disney
+  Category: Entertainment
+- App: CNBC
+  Company:
+    - Comcast
+  Category: News
+- App: SnapChat
+  Company:
+    - Snap
+  Category: Social Media
