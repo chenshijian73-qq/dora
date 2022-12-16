@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"sync"
 	"text/template"
 
@@ -81,4 +82,9 @@ func Converted2Rendered(r io.Reader, w io.Writer, prefix string) {
 		_, _ = io.Copy(w, &buf)
 		buf.Reset()
 	}
+}
+func Render(output string, w io.Writer, prefix string) {
+	// use buf to ensure atomic output of each line
+	color.New(color.FgHiBlue).Fprintf(os.Stdout, "%v:\n", prefix)
+	color.New(color.FgHiWhite).Fprintf(os.Stdout, "%v", output)
 }

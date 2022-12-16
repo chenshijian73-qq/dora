@@ -4,7 +4,6 @@ import (
 	"context"
 	common "github.com/chenshijian73-qq/Doraemon/pkg"
 	"github.com/chenshijian73-qq/Doraemon/pkg/sshutils"
-	"io"
 	"os"
 	"os/signal"
 	"sync"
@@ -82,7 +81,5 @@ func exec(ctx context.Context, cmd string, s *Server, ping bool) error {
 		}
 	}()
 
-	return sshSession.PipeExec(cmd, func(r io.Reader, w io.Writer) {
-		common.Converted2Rendered(r, w, s.Name+":")
-	})
+	return sshSession.PipeExec(cmd, s.Name)
 }

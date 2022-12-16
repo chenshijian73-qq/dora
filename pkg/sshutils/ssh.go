@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/chenshijian73-qq/Doraemon/pkg"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -178,7 +179,7 @@ func (s *SSHSession) requestPty(fd int) error {
 }
 
 // PipeExec exec remote commands and provides pipeline output reading
-func (s *SSHSession) PipeExec(cmd string, printFn func(r io.Reader, w io.Writer)) error {
+func (s *SSHSession) PipeExec(cmd, sName string) error {
 	// request pty
 	err := s.requestPty(int(os.Stdin.Fd()))
 	if err != nil {
@@ -195,14 +196,27 @@ func (s *SSHSession) PipeExec(cmd string, printFn func(r io.Reader, w io.Writer)
 		_ = pr.Close()
 	}()
 
-	s.se.Stdout = pw
-	s.se.Stderr = pw
+	//s.se.Stdout = pw
+	//s.se.Stderr = pw
 	s.Stdout = pr
 	s.Stderr = pr
 
-	go func() { printFn(s.Stdout, os.Stdout) }()
+	output, err := s.se.CombinedOutput(cmd)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	//lines := strings.Split(string(output), "\n")
+	//colorline := pkg.ColorLine{}
+	//color.New(color.FgCyan).Fprintln(os.Stdout, sName, ":")
+	//colorline.Prefix = ""
+	//colorline.Value = string(output)
+	//var buf bytes.Buffer
+	//_ = pkg.RenderedOutput(os.Stdout, colorline)
+	//_, _ = io.Copy(os.Stdout, &buf)
+	//buf.Reset()
+	pkg.Render(string(output), os.Stdout, sName)
 
-	return s.se.Run(cmd)
+	return err
 }
 
 // NewSSHSession return a pointer to SSHSession
