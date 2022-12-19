@@ -1,6 +1,6 @@
-module github.com/chenshijian73-qq/Doraemon
+module github.com/chenshijian73-qq/doraemon
 
-go 1.18
+go 1.19
 
 require (
 	github.com/fatih/color v1.13.0
@@ -10,7 +10,7 @@ require (
 	github.com/pkg/sftp v1.13.5
 	github.com/spf13/cobra v1.6.1
 	github.com/yukithm/json2csv v0.1.2
-	golang.org/x/crypto v0.3.0
+	golang.org/x/crypto v0.4.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -24,6 +24,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/term v0.2.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/term v0.3.0 // indirect
 )

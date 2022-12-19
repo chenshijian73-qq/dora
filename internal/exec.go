@@ -2,8 +2,8 @@ package internal
 
 import (
 	"context"
-	common "github.com/chenshijian73-qq/Doraemon/pkg"
-	"github.com/chenshijian73-qq/Doraemon/pkg/sshutils"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
+	"github.com/chenshijian73-qq/doraemon/pkg/sshutils"
 	"os"
 	"os/signal"
 	"sync"

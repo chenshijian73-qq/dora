@@ -3,7 +3,7 @@ package sshutils
 import (
 	"errors"
 	"fmt"
-	"github.com/chenshijian73-qq/Doraemon/pkg"
+	"github.com/chenshijian73-qq/doraemon/pkg"
 	"io"
 	"log"
 	"os"

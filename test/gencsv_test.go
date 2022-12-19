@@ -3,7 +3,8 @@ package test
 import (
 	"flag"
 	"fmt"
-	"github.com/chenshijian73-qq/Doraemon/internal"
+	"github.com/chenshijian73-qq/doraemon/internal"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"os"
 	"testing"
 )
@@ -34,8 +35,6 @@ func TestMain(m *testing.M) {
 
 func Test_yaml2csv(t *testing.T) {
 	fmt.Println(inputFile, outputFile)
-	_, csv := internal.YamlToCsv(inputFile, outputFile)
-	if csv != nil {
-		return
-	}
+	err := internal.YamlToCsv(inputFile, outputFile)
+	common.CheckErr(err)
 }

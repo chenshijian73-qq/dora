@@ -1,2 +1,4 @@
-Name,Age,Sex,class
-chen,26,1,17
+name,age
+Alice,30
+Bob,35
+40,Charlie

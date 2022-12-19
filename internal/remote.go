@@ -3,12 +3,12 @@ package internal
 import (
 	"bytes"
 	"fmt"
-	common "github.com/chenshijian73-qq/Doraemon/pkg"
-	"github.com/chenshijian73-qq/Doraemon/pkg/sshutils"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
+	"github.com/chenshijian73-qq/doraemon/pkg/sshutils"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
 	"io/ioutil"
+	"os"
 	osexec "os/exec"
 	"strings"
 	"time"
@@ -151,10 +151,8 @@ func (s *Server) authMethod() []ssh.AuthMethod {
 // privateKeyFileAuth return private key auth method
 func privateKeyFileAuth(file, password string) (ssh.AuthMethod, error) {
 	if strings.HasPrefix(file, "~") {
-		home, err := homedir.Dir()
-		if err != nil {
-			return nil, err
-		}
+		home, err := os.UserHomeDir()
+		common.CheckErr(err)
 		file = strings.Replace(file, "~", home, 1)
 	}
 	buffer, err := ioutil.ReadFile(file)

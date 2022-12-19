@@ -3,7 +3,7 @@ package internal
 import (
 	"errors"
 	"fmt"
-	common "github.com/chenshijian73-qq/Doraemon/pkg"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/olekukonko/tablewriter"
 	"os"
 	"os/signal"

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/chenshijian73-qq/Doraemon/internal"
+	"github.com/chenshijian73-qq/doraemon/internal"
 	"github.com/spf13/cobra"
 )
 

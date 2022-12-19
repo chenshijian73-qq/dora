@@ -2,11 +2,9 @@ package internal
 
 import (
 	"fmt"
-	common "github.com/chenshijian73-qq/Doraemon/pkg"
-	"github.com/mitchellh/go-homedir"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/olekukonko/tablewriter"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -32,10 +30,8 @@ var (
 )
 
 func LoadConfig() {
-	home, err := homedir.Dir()
-	if err != nil {
-		log.Fatal(err)
-	}
+	home, err := os.UserHomeDir()
+	common.CheckErr(err)
 
 	// load config dir from env
 	configDir = os.Getenv(CCSEnvConfigDir)

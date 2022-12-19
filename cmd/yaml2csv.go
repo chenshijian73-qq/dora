@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/chenshijian73-qq/Doraemon/internal"
+	"github.com/chenshijian73-qq/doraemon/internal"
 	"github.com/spf13/cobra"
 	"log"
 )
@@ -14,7 +14,7 @@ var yaml2csv = &cobra.Command{
 	Use:   "yaml2csv",
 	Short: "generate csv from the yaml data",
 	Run: func(cmd *cobra.Command, args []string) {
-		_, err := internal.YamlToCsv(yamlFile, outFile)
+		err := internal.YamlToCsv(yamlFile, outFile)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/chenshijian73-qq/Doraemon/internal"
-	common "github.com/chenshijian73-qq/Doraemon/pkg"
+	"github.com/chenshijian73-qq/doraemon/internal"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"

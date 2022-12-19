@@ -2,8 +2,8 @@ package internal
 
 import (
 	"errors"
-	common "github.com/chenshijian73-qq/Doraemon/pkg"
-	"github.com/chenshijian73-qq/Doraemon/pkg/sshutils"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
+	"github.com/chenshijian73-qq/doraemon/pkg/sshutils"
 	"github.com/fatih/color"
 	"strings"
 	"sync"

@@ -17,9 +17,9 @@ mkdir ${TARGET_DIR}
 if [ "$1" == "install" ]; then
   echo "install to ${GOPSTH}/bin/csj"
   go build -o ${GOPSTH}/bin/csj -ldflags \
-    "-X 'github.com/chenshijian73-qq/Doraemon/cmd.Version=$(BUILD_VERSION)' \
-    -X 'github.com/chenshijian73-qq/Doraemon/cmd.BUILD_DATE=$(BUILD_DATE)' \
-    -X 'github.com/chenshijian73-qq/Doraemon/cmd.CommitID=$(COMMIT_SHA1)' "
+    "-X 'github.com/chenshijian73-qq/doraemon/cmd.Version=$(BUILD_VERSION)' \
+    -X 'github.com/chenshijian73-qq/doraemon/cmd.BUILD_DATE=$(BUILD_DATE)' \
+    -X 'github.com/chenshijian73-qq/doraemon/cmd.CommitID=$(COMMIT_SHA1)' "
   for cmd in ${COMMANDS}; do
       echo "install => ${GOPATH}/bin/${cmd}"
       ln -sf ${GOPATH}/bin/dora ${GOPATH}/bin/${cmd}
@@ -44,9 +44,9 @@ else
 
       echo "build => ${TARGET}"
       go build -trimpath -o "${TARGET}" \
-              -ldflags    "-X 'github.com/chenshijian73-qq/Doraemon/cmd.Version=${BUILD_VERSION}' \
-                          -X 'github.com/chenshijian73-qq/Doraemon/cmd.BuildDate=${BUILD_DATE}' \
-                          -X 'github.com/chenshijian73-qq/Doraemon/cmd.CommitID=${COMMIT_SHA1}' \
+              -ldflags    "-X 'github.com/chenshijian73-qq/doraemon/cmd.Version=${BUILD_VERSION}' \
+                          -X 'github.com/chenshijian73-qq/doraemon/cmd.BuildDate=${BUILD_DATE}' \
+                          -X 'github.com/chenshijian73-qq/doraemon/cmd.CommitID=${COMMIT_SHA1}' \
                           -w -s"
   done
 fi
