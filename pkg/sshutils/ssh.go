@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/chenshijian73-qq/doraemon/pkg"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -202,11 +201,7 @@ func (s *SSHSession) PipeExec(cmd, sName string) error {
 	s.Stderr = pr
 
 	output, err := s.se.CombinedOutput(cmd)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	err = pkg.Render(string(output), sName)
+	err = pkg.Render(string(output), sName, err)
 
 	return err
 }

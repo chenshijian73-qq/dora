@@ -14,15 +14,17 @@ COMMANDS="json2csv version ctx sprint"
 rm -rf ${TARGET_DIR}
 mkdir ${TARGET_DIR}
 
+instal_path=$(echo ${GOPATH}|awk -F ":" '{print$1}')
+
 if [ "$1" == "install" ]; then
-  echo "install to ${GOPSTH}/bin/csj"
-  go build -o ${GOPSTH}/bin/csj -ldflags \
-    "-X 'github.com/chenshijian73-qq/doraemon/cmd.Version=$(BUILD_VERSION)' \
-    -X 'github.com/chenshijian73-qq/doraemon/cmd.BUILD_DATE=$(BUILD_DATE)' \
-    -X 'github.com/chenshijian73-qq/doraemon/cmd.CommitID=$(COMMIT_SHA1)' "
+  echo "install to ${instal_path}"
+  go build -o ${instal_path}/dora -ldflags \
+    "-X 'github.com/chenshijian73-qq/doraemon/cmd.Version=${BUILD_VERSION}' \
+    -X 'github.com/chenshijian73-qq/doraemon/cmd.BUILD_DATE=${BUILD_DATE}' \
+    -X 'github.com/chenshijian73-qq/doraemon/cmd.CommitID=${COMMIT_SHA1}' "
   for cmd in ${COMMANDS}; do
-      echo "install => ${GOPATH}/bin/${cmd}"
-      ln -sf ${GOPATH}/bin/dora ${GOPATH}/bin/${cmd}
+      echo "install => ${instal_path}/${cmd}"
+      ln -sf ${instal_path}/dora ${instal_path}/${cmd}
   done
 elif [ "$1" == "uninstall" ]; then
     echo "remove => ${GOPATH}/bin/csj"
