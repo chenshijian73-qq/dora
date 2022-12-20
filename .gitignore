@@ -2,3 +2,4 @@ dist
 .idea
 vcs.xml
 Doraemon.iml
+*.sql
