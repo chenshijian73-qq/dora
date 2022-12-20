@@ -1,4 +1,12 @@
 name,age
 Alice,30
 Bob,35
-40,Charlie
+Charlie,40
+45,Dora
+/App,/Category,/Company,/Company/0,/Company/1,/Company/2
+Instagram,Social Media,,Facebook,xxxix,yyy
+Instagram,Social Media2,,,,
+WeChat,Social Media,,,Tencent,
+Hotstar,Entertainment,,Disney,,
+CNBC,News,,Comcast,,
+SnapChat,Social Media,,Snap,,

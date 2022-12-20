@@ -28,11 +28,13 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-//func Test_json2csv(t *testing.T) {
-//	fmt.Println(inputFile, outputFile)
-//	internal.Json2Csv(inputFile, outputFile)
-//}
+// go test -v gencsv_test.go -run Test_json2csv -in input.json -out output.csv
+func Test_json2csv(t *testing.T) {
+	fmt.Println(inputFile, outputFile)
+	internal.Json2Csv(inputFile, outputFile)
+}
 
+// go test -v gencsv_test.go -run Test_yaml2csv -in input.yaml -out output.csv
 func Test_yaml2csv(t *testing.T) {
 	fmt.Println(inputFile, outputFile)
 	err := internal.YamlToCsv(inputFile, outputFile)

@@ -205,16 +205,8 @@ func (s *SSHSession) PipeExec(cmd, sName string) error {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	//lines := strings.Split(string(output), "\n")
-	//colorline := pkg.ColorLine{}
-	//color.New(color.FgCyan).Fprintln(os.Stdout, sName, ":")
-	//colorline.Prefix = ""
-	//colorline.Value = string(output)
-	//var buf bytes.Buffer
-	//_ = pkg.RenderedOutput(os.Stdout, colorline)
-	//_, _ = io.Copy(os.Stdout, &buf)
-	//buf.Reset()
-	pkg.Render(string(output), os.Stdout, sName)
+
+	err = pkg.Render(string(output), sName)
 
 	return err
 }

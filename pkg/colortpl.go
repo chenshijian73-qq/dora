@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"sync"
 	"text/template"
@@ -24,6 +25,14 @@ const (
 	ColorWhite   = "white"
 )
 
+var colors = []color.Attribute{
+	color.FgRed,
+	color.FgGreen,
+	color.FgYellow,
+	color.FgBlue,
+	color.FgMagenta,
+	color.FgCyan,
+}
 var colorOnce sync.Once
 var tplCh = make(chan *template.Template, 1)
 var tplCacheMux sync.RWMutex
@@ -83,8 +92,19 @@ func Converted2Rendered(r io.Reader, w io.Writer, prefix string) {
 		buf.Reset()
 	}
 }
-func Render(output string, w io.Writer, prefix string) {
-	// use buf to ensure atomic output of each line
-	color.New(color.FgHiBlue).Fprintf(os.Stdout, "%v:\n", prefix)
-	color.New(color.FgHiWhite).Fprintf(os.Stdout, "%v", output)
+func Render(output string, prefix string) error {
+	c := colors[rand.Intn(len(colors))]
+
+	color.Set(c)
+	defer color.Unset()
+	_, err := fmt.Fprintf(os.Stdout, "%v:\n", prefix)
+	if err != nil {
+		return err
+	}
+	color.Set(color.FgHiWhite)
+	_, err = fmt.Fprintf(os.Stdout, "%v", output)
+	if err != nil {
+		return err
+	}
+	return err
 }
