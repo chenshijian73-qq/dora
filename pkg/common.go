@@ -24,6 +24,13 @@ func PrintErrWithPrefix(prefix string, err error) {
 	}
 }
 
+func PrintErrWithPrefixAndExit(prefix string, err error) {
+	if err != nil {
+		fmt.Println(prefix, err.Error())
+		os.Exit(-1)
+	}
+}
+
 func PrintErr(err error) {
 	if err != nil {
 		fmt.Println("😱 " + err.Error())

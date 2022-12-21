@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/chenshijian73-qq/doraemon/internal"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jamf/go-mysqldump"
 	"os"
@@ -47,7 +48,8 @@ func Test_mysqldump1(t *testing.T) {
 	fmt.Printf("File is saved to %s", dumpFilenameFormat)
 
 	// Close dumper, connected database and file stream.
-	dumper.Close()
+
+	common.CheckErr(dumper.Close())
 }
 
 func Test_mysqldump2(t *testing.T) {

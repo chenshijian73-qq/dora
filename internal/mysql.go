@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jamf/go-mysqldump"
 	"os"
@@ -18,27 +19,22 @@ type DumpConfig struct {
 
 func Mysqldump(config DumpConfig) {
 	dumpFilenameFormat := fmt.Sprintf("%s-20060102T150405", config.MysqlConfig.DBName)
+	fmt.Println(config.MysqlConfig.FormatDSN())
 	db, err := sql.Open("mysql", config.MysqlConfig.FormatDSN())
-	if err != nil {
-		fmt.Println("Error opening database: ", err)
-		return
-	}
-	//dumper, err := mysqldump.Register(db, config.DumpPath, dumpFilenameFormat)
+	common.PrintErrWithPrefixAndExit("Error opening database: ", err)
+
+	err = db.Ping()
+	common.PrintErrWithPrefixAndExit("Failed to ping mysql: ", err)
+
 	dumper, err, filePath := Register(db, config.DumpPath, dumpFilenameFormat)
-	if err != nil {
-		fmt.Println("Error registering databse:", err)
-		return
-	}
+	common.PrintErrWithPrefixAndExit("Error registering databse:", err)
+
 	err = dumper.Dump()
-	if err != nil {
-		fmt.Println("Error dumping:", err)
-		return
-	}
+	common.PrintErrWithPrefixAndExit("Error dumping:", err)
+
 	err = dumper.Close()
-	if err != nil {
-		fmt.Println("dump close:", err)
-		return
-	}
+	common.PrintErrWithPrefixAndExit("dump close:", err)
+
 	fmt.Printf("File is saved to %s", filePath)
 }
 
