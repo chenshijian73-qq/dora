@@ -34,7 +34,7 @@ func runCopy(args []string, multiServer bool) error {
 		}
 		defer func() { _ = client.Close() }()
 
-		scpClient, err := sshutils.NewSCPClient(client)
+		scpClient, err := sshutils.NewSCPClient(client, s.Name)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ func runCopy(args []string, multiServer bool) error {
 					}
 					defer func() { _ = client.Close() }()
 
-					scpClient, err := sshutils.NewSCPClient(client)
+					scpClient, err := sshutils.NewSCPClient(client, s.Name)
 					if err != nil {
 						_, _ = color.New(color.BgRed, color.FgHiWhite).Printf("%s:  %s", s.Name, err)
 						return
@@ -89,7 +89,7 @@ func runCopy(args []string, multiServer bool) error {
 				return err
 			}
 			defer func() { _ = client.Close() }()
-			scpClient, err := sshutils.NewSCPClient(client)
+			scpClient, err := sshutils.NewSCPClient(client, s.Name)
 			if err != nil {
 				return err
 			}

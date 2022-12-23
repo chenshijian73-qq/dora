@@ -31,7 +31,7 @@ func Render(output string, prefix string, cmdError error) error {
 		return err
 	}
 	color.Set(color.FgHiWhite)
-	_, err = fmt.Fprintf(os.Stdout, "%v", output)
+	_, err = fmt.Fprintf(os.Stdout, "%v\n", output)
 	if err != nil {
 		return err
 	}

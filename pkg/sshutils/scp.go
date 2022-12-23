@@ -2,8 +2,11 @@ package sshutils
 
 import (
 	"errors"
+	"fmt"
+	"github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/mitchellh/go-homedir"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -16,6 +19,7 @@ import (
 
 type scpClient struct {
 	sftpClient *sftp.Client
+	ServerName string
 }
 
 func (s *scpClient) CopyLocalFile2Remote(localFilePath, remotePath string) error {
@@ -252,7 +256,9 @@ func (s *scpClient) CopyLocal2Remote(paths ...string) error {
 			return err
 		}
 	}
-	return nil
+	filePath := fmt.Sprintf("文件已保存到：%s", remotePath)
+	err := pkg.Render(filePath, s.ServerName, nil)
+	return err
 
 }
 
@@ -386,7 +392,11 @@ func (s *scpClient) CopyRemote2Local(remotePath, localPath string) error {
 			}
 		}
 	}
-
+	filepath.Walk(localPath, func(path string, info fs.FileInfo, err error) error {
+		fmt.Println(path) //打印path信息
+		//fmt.Println(info.Name()) //打印文件或目录名
+		return err
+	})
 	return nil
 }
 
@@ -416,12 +426,13 @@ func (s *scpClient) replaceHome(path string, isLocal bool) string {
 	return path
 }
 
-func NewSCPClient(client *ssh.Client) (*scpClient, error) {
+func NewSCPClient(client *ssh.Client, serverName string) (*scpClient, error) {
 	sftpClient, err := sftp.NewClient(client)
 	if err != nil {
 		return nil, err
 	}
 	return &scpClient{
 		sftpClient: sftpClient,
+		ServerName: serverName,
 	}, nil
 }
