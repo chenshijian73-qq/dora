@@ -27,7 +27,6 @@ func Test_mysqldump1(t *testing.T) {
 		DumpPath:    dumpPath,
 	}
 
-	//internal.Mysqldump(config)
 	dumpFilenameFormat := fmt.Sprintf("%s-20060102T150405", config.MysqlConfig.DBName)
 	db, err := sql.Open("mysql", config.MysqlConfig.FormatDSN())
 	if err != nil {
@@ -53,19 +52,31 @@ func Test_mysqldump1(t *testing.T) {
 }
 
 func Test_mysqldump2(t *testing.T) {
+	DBGroup := [...]string{"test", "workflow"}
 	mysqlconfig := mysql.NewConfig()
 	mysqlconfig.User = "coding"
 	mysqlconfig.Passwd = "coding123"
-	mysqlconfig.DBName = "coding_testing"
+	mysqlconfig.DBName = ""
 	mysqlconfig.Net = "tcp"
 	mysqlconfig.Addr = "127.0.0.1:13306"
 	mysqlconfig.ParseTime = true
-	wd, _ := os.Getwd()
 
+	wd, _ := os.Getwd()
 	dumpPath := fmt.Sprintf("%s/%s", wd, "sql")
-	config := internal.DumpConfig{
-		MysqlConfig: mysqlconfig,
-		DumpPath:    dumpPath,
+
+	for i := 0; i < len(DBGroup); i++ {
+		mysqlconfig.DBName = DBGroup[i]
+		config := internal.DumpConfig{
+			MysqlConfig: mysqlconfig,
+			DumpPath:    dumpPath,
+		}
+		internal.Mysqldump(config)
 	}
-	internal.Mysqldump(config)
+}
+
+func Test_mysqldump3(t *testing.T) {
+	wd, _ := os.Getwd()
+	dumpPath := fmt.Sprintf("%s/%s", wd, "sql")
+	DBGroup := []string{"test", "workflow"}
+	internal.Dump("127.0.0.1", "13306", "coding", "coding123", dumpPath, DBGroup)
 }

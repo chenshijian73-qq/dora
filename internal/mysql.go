@@ -7,6 +7,7 @@ import (
 	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jamf/go-mysqldump"
+	"log"
 	"os"
 	"path"
 	"time"
@@ -17,7 +18,42 @@ type DumpConfig struct {
 	DumpPath    string
 }
 
+func Dump(host, port, user, passwd, dumppath string, dbGroup []string) {
+
+	mysqlconfig := mysql.NewConfig()
+	mysqlconfig.User = user
+	mysqlconfig.Passwd = passwd
+	mysqlconfig.DBName = ""
+	mysqlconfig.Net = "tcp"
+	mysqlconfig.Addr = "127.0.0.1:13306"
+	mysqlconfig.Addr = fmt.Sprint(host, ":", port)
+	mysqlconfig.ParseTime = true
+
+	var dumpconfig DumpConfig
+
+	if len(dbGroup) < 1 {
+		log.Fatal("dont config dbName")
+	} else if len(dbGroup) == 1 {
+		mysqlconfig.DBName = dbGroup[0]
+		dumpconfig = DumpConfig{
+			MysqlConfig: mysqlconfig,
+			DumpPath:    dumppath,
+		}
+		Mysqldump(dumpconfig)
+	} else {
+		for i := 0; i < len(dbGroup); i++ {
+			mysqlconfig.DBName = dbGroup[i]
+			dumpconfig = DumpConfig{
+				MysqlConfig: mysqlconfig,
+				DumpPath:    dumppath,
+			}
+			Mysqldump(dumpconfig)
+		}
+	}
+}
+
 func Mysqldump(config DumpConfig) {
+
 	dumpFilenameFormat := fmt.Sprintf("%s-20060102T150405", config.MysqlConfig.DBName)
 	fmt.Println(config.MysqlConfig.FormatDSN())
 	db, err := sql.Open("mysql", config.MysqlConfig.FormatDSN())
@@ -35,7 +71,7 @@ func Mysqldump(config DumpConfig) {
 	err = dumper.Close()
 	common.PrintErrWithPrefixAndExit("dump close:", err)
 
-	fmt.Printf("File is saved to %s", filePath)
+	fmt.Printf("File is saved to %s\n", filePath)
 }
 
 func Register(db *sql.DB, dir, format string) (*mysqldump.Data, error, string) {

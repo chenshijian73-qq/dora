@@ -201,7 +201,7 @@ func (s *SSHSession) PipeExec(cmd, sName string) error {
 	s.Stderr = pr
 
 	output, err := s.se.CombinedOutput(cmd)
-	err = pkg.Render(string(output), sName, err)
+	pkg.Render(string(output), sName, nil)
 
 	return err
 }
