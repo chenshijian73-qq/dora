@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/chenshijian73-qq/doraemon/internal"
+	"github.com/chenshijian73-qq/doraemon/internal/machine"
 	"github.com/spf13/cobra"
 	"path/filepath"
 )
@@ -18,11 +18,11 @@ var sexec = &cobra.Command{
 		if len(args) < 1 {
 			_ = cmd.Help()
 		} else {
-			internal.Exec(commnad, args[0], execGroup, false)
+			machine.Exec(commnad, args[0], execGroup, false)
 		}
 	},
 	ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) (res []string, _ cobra.ShellCompDirective) {
-		for _, s := range internal.ListServers(true) {
+		for _, s := range machine.ListServers(true) {
 			res = append(res, fmt.Sprintf("%s\tfrom %s(%s)", s.Name, filepath.Base(s.ConfigPath), s.Name))
 		}
 		return res, cobra.ShellCompDirectiveNoFileComp

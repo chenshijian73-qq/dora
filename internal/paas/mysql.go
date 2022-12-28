@@ -1,4 +1,4 @@
-package internal
+package paas
 
 import (
 	"database/sql"
@@ -75,7 +75,7 @@ func Mysqldump(config DumpConfig) {
 }
 
 func Register(db *sql.DB, dir, format string) (*mysqldump.Data, error, string) {
-	if !isDir(dir) {
+	if !IsDir(dir) {
 		return nil, errors.New("invalid directory"), ""
 	}
 
@@ -83,7 +83,7 @@ func Register(db *sql.DB, dir, format string) (*mysqldump.Data, error, string) {
 	p := path.Join(dir, name+".sql")
 
 	// Check dump directory
-	if e, _ := exists(p); e {
+	if e, _ := Exists(p); e {
 		return nil, errors.New("Dump '" + name + "' already exists."), ""
 	}
 
@@ -100,7 +100,7 @@ func Register(db *sql.DB, dir, format string) (*mysqldump.Data, error, string) {
 	}, nil, p
 }
 
-func exists(p string) (bool, os.FileInfo) {
+func Exists(p string) (bool, os.FileInfo) {
 	f, err := os.Open(p)
 	if err != nil {
 		return false, nil
@@ -113,8 +113,8 @@ func exists(p string) (bool, os.FileInfo) {
 	return true, fi
 }
 
-func isDir(p string) bool {
-	if e, fi := exists(p); e {
+func IsDir(p string) bool {
+	if e, fi := Exists(p); e {
 		return fi.Mode().IsDir()
 	}
 	return false

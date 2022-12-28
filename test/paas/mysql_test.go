@@ -1,9 +1,9 @@
-package test
+package paas
 
 import (
 	"database/sql"
 	"fmt"
-	"github.com/chenshijian73-qq/doraemon/internal"
+	"github.com/chenshijian73-qq/doraemon/internal/paas"
 	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jamf/go-mysqldump"
@@ -22,7 +22,7 @@ func Test_mysqldump1(t *testing.T) {
 	wd, _ := os.Getwd()
 
 	dumpPath := fmt.Sprintf("%s/%s", wd, "sql")
-	config := internal.DumpConfig{
+	config := paas.DumpConfig{
 		MysqlConfig: mysqlconfig,
 		DumpPath:    dumpPath,
 	}
@@ -66,11 +66,11 @@ func Test_mysqldump2(t *testing.T) {
 
 	for i := 0; i < len(DBGroup); i++ {
 		mysqlconfig.DBName = DBGroup[i]
-		config := internal.DumpConfig{
+		config := paas.DumpConfig{
 			MysqlConfig: mysqlconfig,
 			DumpPath:    dumpPath,
 		}
-		internal.Mysqldump(config)
+		paas.Mysqldump(config)
 	}
 }
 
@@ -78,5 +78,5 @@ func Test_mysqldump3(t *testing.T) {
 	wd, _ := os.Getwd()
 	dumpPath := fmt.Sprintf("%s/%s", wd, "sql")
 	DBGroup := []string{"test", "workflow"}
-	internal.Dump("127.0.0.1", "13306", "coding", "coding123", dumpPath, DBGroup)
+	paas.Dump("127.0.0.1", "13306", "coding", "coding123", dumpPath, DBGroup)
 }

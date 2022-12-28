@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/chenshijian73-qq/doraemon/internal"
+	"github.com/chenshijian73-qq/doraemon/internal/machine"
 	"github.com/spf13/cobra"
 )
 
@@ -14,11 +14,11 @@ var scf = &cobra.Command{
 		if len(args) < 2 {
 			_ = cmd.Help()
 		} else {
-			internal.Copy(args, copy2Group)
+			machine.Copy(args, copy2Group)
 		}
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) (res []string, _ cobra.ShellCompDirective) {
-		for _, s := range internal.ListServers(true) {
+		for _, s := range machine.ListServers(true) {
 			res = append(res, s.Name)
 		}
 		return res, cobra.ShellCompDirectiveDefault

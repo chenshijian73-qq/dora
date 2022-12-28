@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/chenshijian73-qq/doraemon/internal"
+	"github.com/chenshijian73-qq/doraemon/internal/machine"
 	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"github.com/spf13/cobra"
 	"os"
@@ -22,7 +22,7 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	internal.LoadConfig()
+	machine.LoadConfig()
 
 	if os.Args[0] != rootCmd.Name() {
 		subCmd, _, err := rootCmd.Find([]string{filepath.Base(os.Args[0])})
