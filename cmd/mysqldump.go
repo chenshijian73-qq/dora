@@ -11,7 +11,7 @@ var host, port, user, passwd, dumpPath string
 
 var mysqldump = &cobra.Command{
 	Use:     "mysqldump [Args]",
-	Short:   "dump mariadb databases",
+	Short:   "Dump Mariadb Databases",
 	Example: "dora mysqldump -H mysql_host -u mysql -p 123456 -P 3306 db1 db2 db3 -o backup/",
 	Run: func(cmd *cobra.Command, args []string) {
 		paas.Dump(host, port, user, passwd, dumpPath, args)

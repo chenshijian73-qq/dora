@@ -12,7 +12,7 @@ var (
 
 var json2csv = &cobra.Command{
 	Use:   "json2csv",
-	Short: "generate csv from the json data",
+	Short: "Generate csv from the json data",
 	Run: func(cmd *cobra.Command, args []string) {
 		internal.Json2Csv(jsonFile, outFile)
 	},

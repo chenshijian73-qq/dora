@@ -12,7 +12,7 @@ var (
 
 var yaml2csv = &cobra.Command{
 	Use:   "yaml2csv",
-	Short: "generate csv from the yaml data",
+	Short: "Generate csv from the yaml data",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := internal.YamlToCsv(yamlFile, outFile)
 		if err != nil {
