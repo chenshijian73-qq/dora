@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/fatih/color v1.13.0
 	github.com/go-sql-driver/mysql v1.7.0
+	github.com/gomodule/redigo v1.8.9
 	github.com/jamf/go-mysqldump v0.7.1
 	github.com/json-iterator/go v1.1.12
 	github.com/lib/pq v1.10.7
