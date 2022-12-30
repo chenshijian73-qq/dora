@@ -14,7 +14,7 @@ var rediscli = &cobra.Command{
 	Short:   "redis client",
 	Example: "dora rediscli -H redis_host -P 6379",
 	Run: func(cmd *cobra.Command, args []string) {
-		paas.RedisCli()
+		paas.RedisCli(redis_host, redis_port)
 	},
 	ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) (res []string, _ cobra.ShellCompDirective) {
 		for _, info := range machine.Configs {

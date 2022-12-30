@@ -8,8 +8,9 @@ import (
 	"strings"
 )
 
-func RedisCli() {
-	conn, err := redis.Dial("tcp", "127.0.0.1:6379")
+func RedisCli(host, port string) {
+	addr := fmt.Sprintf("%s:%s", host, port)
+	conn, err := redis.Dial("tcp", addr)
 	if err != nil {
 		fmt.Println(err)
 		return
