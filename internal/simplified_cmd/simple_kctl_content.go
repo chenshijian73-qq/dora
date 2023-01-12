@@ -78,6 +78,38 @@ function delpods(){
 	kubectl get pod -n $namespace|grep $keyword|awk '{print$1}'|xargs kubectl -n $namespace delete pod
 }
 
+select_object=""
+function selectWhichOneToContine()
+{
+    local namespace=$1
+    local type=$2
+    local keyword=$3
+    array=($(kubectl get -n $namespace $type |grep $keyword|awk '{print$1}'))
+
+    if [ "$array" == "" ];then
+        printRed "can't find anything with keyword you provide"
+        return 1
+    fi
+
+    local num=${#array[@]}
+
+    if [ "$num" == '1' ]
+	then
+	select_object=$array
+	else
+	printYello "Please select the one to operate"
+	select var in ${array[*]}
+	do
+	case $var in
+	*)
+	select_object=$var
+	break
+	;;
+	esac
+	done
+	fi    
+}
+
 function kedit(){
     local OPTIND
     while getopts 'n:k:t:h:' OPT; do
@@ -102,28 +134,14 @@ function kedit(){
 	;;
 	esac
 	done
-	array=($(kubectl get -n $namespace $type |grep $keyword|awk '{print$1}'))
+    
+	selectWhichOneToContine $namespace $type $keyword
 
-	num=${#array[@]}
-
-	if [ "$num" == '1' ]
-	then
-	name=$array
-	else
-	echo "Please select the one to operate"
-	select var in ${array[*]}
-	do
-	case $var in
-	*)
-	name=$var
-	break
-	;;
-	esac
-	done
-	fi
+    name=$select_object
 
 	kubectl -n $namespace edit $type $name
 }
+
 function kdc(){
     local OPTIND
     while getopts 'n:k:t:h:' OPT; do
@@ -148,26 +166,9 @@ function kdc(){
 	;;
 	esac
 	done
-	array=($(kubectl get -n $namespace $type |grep $keyword|awk '{print$1}'))
+	selectWhichOneToContine $namespace $type $keyword
 
-	num=${#array[@]}
-
-	if [ "$num" == '1' ]
-	then
-	name=$array
-	else
-	echo "Please select the one to operate"
-	select var in ${array[*]}
-	do
-	case $var in
-	*)
-	name=$var
-	break
-	;;
-	esac
-	done
-	fi
-
+    name=$select_object
 	kubectl -n $namespace describe $type $name
 }
 
@@ -195,25 +196,10 @@ function kdl(){
 	;;
 	esac
 	done
-	array=($(kubectl get -n $namespace $type |grep $keyword|awk '{print$1}'))
 
-	num=${#array[@]}
+    selectWhichOneToContine $namespace $type $keyword
 
-	if [ "$num" == '1' ]
-	then
-	name=$array
-	else
-	echo "Please select the one to operate"
-	select var in ${array[*]}
-	do
-	case $var in
-	*)
-	name=$var
-	break
-	;;
-	esac
-	done
-	fi
+    name=$select_object
 
 	kubectl -n $namespace delete $type $name
 }
@@ -240,28 +226,13 @@ function klogs(){
 	esac
 	done
 
-	array=($(kubectl get -n $namespace pod |grep $keyword|awk '{print$1}'))
+	selectWhichOneToContine $namespace "pod" $keyword
 
-	num=${#array[@]}
-
-    if [ "$num" == '1' ]
-    then
-        name=$array
-    else
-        echo "Please select the one to operate"
-        select var in ${array[*]}
-        do
-            case $var in
-                *)
-                    name=$var
-                    break
-                ;;
-            esac
-        done
-    fi
+    name=$select_object
 
     kubectl -n $namespace logs -f $name --tail=1000
 }
+
 function kexec(){
     local OPTIND
     while getopts 'n:k:s:h:' OPT; do
@@ -287,27 +258,31 @@ function kexec(){
 	esac
 	done
 
-	array=($(kubectl get -n $namespace pod |grep $keyword|awk '{print$1}'))
+	selectWhichOneToContine $namespace "pod" $keyword
 
-	num=${#array[@]}
+    name=$select_object
 
-    if [ "$num" == '1' ]
+    container_arrays=($(kubectl get -n $namespace pod $name -o jsonpath='{range .spec.containers[*]}{.name}{"\n"}{end}'))
+    container_num=${#array[@]}
+
+    if [ "$container_num" == '1' ]
     then
-        name=$array
+        name=$container_arrays
     else
-        echo "Please select the one to operate"
-        select var in ${array[*]}
+        printYello "Please select the one to operate"
+        select var in ${container_arrays[*]}
         do
             case $var in
                 *)
-                    name=$var
+                    container=$var
                     break
                 ;;
             esac
         done
     fi
+    
 
-    kubectl -n $namespace exec -it $name $cmd
+    kubectl -n $namespace exec -it $name -c $container $cmd
 }
 
 function kg(){
