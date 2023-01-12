@@ -3,15 +3,12 @@ package simplified_cmd
 var Kubectl_shortcut = `
 alias k='kubectl'
 alias kgp='kubectl get pod'
-alias kdc='kubectl describe'
-alias kdl='kubectl delete '
-alias ke='kubectl edit'
 alias kgnode='kubectl get nodes'
 alias ktnode='kubectl top nodes'
 alias anoready='kubectl get pod -A|grep 0/|grep -v Complete'
 
 function noready(){
-    local OPTIND 
+    local OPTIND
     while getopts 'n:k:h:' OPT
     do
         case $OPT in
@@ -19,11 +16,12 @@ function noready(){
             namespace=$OPTARG
             ;;
             h)
-            echo 'examplel: noready -n ns1'
+            printYello 'example:  noready -n ns1'
 	return 0
 	;;
 	?)
-	echo "(^_^)v ERROR: 请输入参数 -n"
+	printRed "(^_^)v ERROR: 请输入参数 -n"
+    printYello 'example:  noready -n ns1'
 	return 1
 	;;
 	esac
@@ -43,11 +41,12 @@ function podimage(){
             keyword=$OPTARG
             ;;
             h)
-            echo 'examplel: podimage -n ns1 -k name1'
+            printYello 'example:  podimage -n ns1 -k name1'
 	return 0
 	;;
 	?)
-	echo "(*ˉ︶ˉ*) ERROR: 请输入参数 -n 和 -k"
+	printRed "(*ˉ︶ˉ*) ERROR: 请输入参数 -n 和 -k"
+    printYello 'example:  podimage -n ns1 -k name1'
 	return 1
 	;;
 	esac
@@ -66,11 +65,12 @@ function delpods(){
             keyword=$OPTARG
             ;;
             h)
-            echo 'examplel: delpods -n ns1 -k name1'
+            printYello 'example:  delpods -n ns1 -k name1'
 	return 0
 	;;
 	?)
-	echo "(*ˉ︶ˉ*) ERROR: 请输入参数 -n 和 -k"
+	printRed "(*ˉ︶ˉ*) ERROR: 请输入参数 -n 和 -k"
+    printYello 'example:  delpods -n ns1 -k name1'
 	return 1
 	;;
 	esac
@@ -92,11 +92,12 @@ function kedit(){
             type=$OPTARG
             ;;
             h)
-            echo  'examplel: kedit -n ns1 -t cm -k name1'
+            printYello 'example: kedit -n ns1 -t cm -k name1'
 	return 0
 	;;
 	?)
-	echo "(*ˉ︶ˉ*) ERROR: 请输入参数 -n, -t 和 -k"
+	printRed "(*ˉ︶ˉ*) ERROR: 请输入参数 -n, -t 和 -k"
+    printYello 'example: kedit -n ns1 -t cm -k name1'
 	return 1
 	;;
 	esac
@@ -104,7 +105,7 @@ function kedit(){
 	array=($(kubectl get -n $namespace $type |grep $keyword|awk '{print$1}'))
 
 	num=${#array[@]}
-	
+
 	if [ "$num" == '1' ]
 	then
 	name=$array
@@ -120,9 +121,103 @@ function kedit(){
 	esac
 	done
 	fi
-	
+
 	kubectl -n $namespace edit $type $name
 }
+function kdc(){
+    local OPTIND
+    while getopts 'n:k:t:h:' OPT; do
+        case $OPT in
+            n)
+            namespace=$OPTARG
+            ;;
+            k)
+            keyword=$OPTARG
+            ;;
+            t)
+            type=$OPTARG
+            ;;
+            h)
+            printYello 'example: kdc -n ns1 -t cm -k name1'
+	return 0
+	;;
+	?)
+	printRed "(*ˉ︶ˉ*) ERROR: 请输入参数 -n, -t 和 -k"
+    printYello 'example: kdc -n ns1 -t cm -k name1'
+	return 1
+	;;
+	esac
+	done
+	array=($(kubectl get -n $namespace $type |grep $keyword|awk '{print$1}'))
+
+	num=${#array[@]}
+
+	if [ "$num" == '1' ]
+	then
+	name=$array
+	else
+	echo "Please select the one to operate"
+	select var in ${array[*]}
+	do
+	case $var in
+	*)
+	name=$var
+	break
+	;;
+	esac
+	done
+	fi
+
+	kubectl -n $namespace describe $type $name
+}
+
+function kdl(){
+    local OPTIND
+    while getopts 'n:k:t:h:' OPT; do
+        case $OPT in
+            n)
+            namespace=$OPTARG
+            ;;
+            k)
+            keyword=$OPTARG
+            ;;
+            t)
+            type=$OPTARG
+            ;;
+            h)
+            printYello 'example: kdl -n ns1 -t cm -k name1'
+	return 0
+	;;
+	?)
+	printRed "(*ˉ︶ˉ*) ERROR: 请输入参数 -n, -t 和 -k"
+    printYello 'example: kdl -n ns1 -t cm -k name1'
+	return 1
+	;;
+	esac
+	done
+	array=($(kubectl get -n $namespace $type |grep $keyword|awk '{print$1}'))
+
+	num=${#array[@]}
+
+	if [ "$num" == '1' ]
+	then
+	name=$array
+	else
+	echo "Please select the one to operate"
+	select var in ${array[*]}
+	do
+	case $var in
+	*)
+	name=$var
+	break
+	;;
+	esac
+	done
+	fi
+
+	kubectl -n $namespace delete $type $name
+}
+
 function klogs(){
     local OPTIND
     while getopts 'n:k:h:' OPT; do
@@ -134,11 +229,12 @@ function klogs(){
             keyword=$OPTARG
             ;;
             h)
-            echo 'examplel: klogs -n ns1 -k pod1'
+            printYello 'example:  klogs -n ns1 -k pod1'
 	return 0
 	;;
 	?)
-	echo "(*ˉ︶ˉ*) ERROR: 请输入参数 -n , -k"
+	printRed "(*ˉ︶ˉ*) ERROR: 请输入参数 -n , -k"
+    printYello 'example:  klogs -n ns1 -k pod1'
 	return 1
 	;;
 	esac
@@ -180,11 +276,12 @@ function kexec(){
             cmd=$OPTARG
             ;;
             h)
-            echo 'examplel: kexec -n ns1 -k name1 -s bash'
+            printYello 'example:  kexec -n ns1 -k name1 -s bash'
 	return 0
 	;;
 	?)
-	echo "(*ˉ︶ˉ*) ERROR: 请输入参数 -n , -k, -s"
+	printRed "(*ˉ︶ˉ*) ERROR: 请输入参数 -n , -k, -s"
+    printYello 'example:  kexec -n ns1 -k name1 -s bash'
 	return 1
 	;;
 	esac
@@ -212,6 +309,7 @@ function kexec(){
 
     kubectl -n $namespace exec -it $name $cmd
 }
+
 function kg(){
     local OPTIND
     while getopts 't:k:h:' OPT
@@ -224,15 +322,42 @@ function kg(){
             key=$OPTARG
             ;;
             h)
-            echo 
+            echo
 	return 0
 	;;
 	\?)
-	echo "(^_^)v ERROR: 请输入参数 -n" 'examplel: kg -t svc -k keyword'
+	printRed "(^_^)v ERROR: 请输入参数 -n" 
+    printYello 'example: kg -t svc -k keyword'
 	return 1
 	;;
 	esac
 	done
 	kubectl get $type -A|grep $key
+}
+
+function printYello(){
+    echo -e "\033[33m$1\033[0m"
+}
+
+function printRed(){
+    echo -e "\033[31m$1\033[0m"
+}
+
+function k_help(){
+    echo -e "\033[33mk           \033[0m" "= kubectl"
+    echo -e "\033[33mkgp         \033[0m" "= kubectl get pod "
+    echo -e "\033[33mkgnode      \033[0m" "= kubectl get node"
+    echo -e "\033[33mktnode      \033[0m" "= kubectl top node"
+    echo -e "\033[33manoready    \033[0m" "= kubectl get pod -A|grep 0/|grep -v Complete"
+    echo ""
+    echo -e "\033[33mnoready     \033[0m" "获取异常 pod, 使用方式: noready -n ns1"
+    echo -e "\033[33mdelpods     \033[0m" "删除包含关键字的 pod, 使用方式: delpods -n ns1 -k keyword"
+    echo -e "\033[33mpodimage    \033[0m" "获取包含关键字的 pod 镜像, 使用方式:  podimage -n ns1 -k keyword"
+    echo -e "\033[33mkdl         \033[0m" "通过关键词筛选, 选择对象删除, 使用方式: kdl -n ns1 -t cm -k name1"
+    echo -e "\033[33mklogs       \033[0m" "通过关键词筛选后, 选择对象打印日志, 使用方式: klogs -n ns1 -k keyword"
+    echo -e "\033[33mkg          \033[0m" "通过关键词筛选后, 过滤出对象, 使用方式: example: kg -t svc -k keyword"
+    echo -e "\033[33mkedit       \033[0m" "通过关键词筛选后, 选择编辑对象, 使用方式: kedit -n ns1 -t cm -k keyword"
+    echo -e "\033[33mkexec       \033[0m" "通过关键词筛选后, 选择对象进行容器, 使用方式: kexec -n ns1 -k keyword -s bash"
+    echo -e "\033[33mkdc         \033[0m" "通过关键词筛选后，选择要描述的对象, 使用方式: kdc -n ns1 -t cm -k name1"
 }
 `
