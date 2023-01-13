@@ -21,7 +21,6 @@ var (
 	Version   string
 	BuildDate string
 	CommitID  string
-	Arch      string
 )
 
 var versionCmd = &cobra.Command{
@@ -29,7 +28,7 @@ var versionCmd = &cobra.Command{
 	Short: "Show version",
 	Run: func(cmd *cobra.Command, args []string) {
 		banner, _ := base64.StdEncoding.DecodeString(bannerBase64)
-		fmt.Printf(versionTpl, 0x1B, 0, 0, 36, banner, 0x1B, Version, BuildDate, runtime.GOOS+"/"+runtime.GOARCH, CommitID)
+		fmt.Printf(versionTpl, 0x1B, 0, 0, 34, banner, 0x1B, Version, BuildDate, runtime.GOOS+"/"+runtime.GOARCH, CommitID)
 	},
 }
 
