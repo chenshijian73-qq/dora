@@ -78,7 +78,7 @@ func LoadConfig() {
 	bs, err := ioutil.ReadFile(filepath.Join(configDir, CurrentContext))
 	if err != nil || len(bs) < 1 {
 		fmt.Println("failed to get current config, use default config(default.yaml)")
-		currentConfigName = "default.yaml"
+		currentConfigName = BasicConfig
 	} else {
 		currentConfigName = string(bs)
 	}
@@ -149,7 +149,6 @@ func initConfig(dir string) {
 	common.CheckAndExit(ConfigExample().WriteTo(filepath.Join(dir, BasicConfig)))
 	// set current config to default
 	common.CheckAndExit(ioutil.WriteFile(filepath.Join(dir, CurrentContext), []byte(BasicConfig), 0644))
-	//
-	fmt.Println("hello")
+	// give tpl of servers config
 	GenerateSeversTemplateFiles(dir)
 }

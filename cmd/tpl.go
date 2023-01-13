@@ -20,7 +20,7 @@ var tpl = &cobra.Command{
 }
 
 func init() {
-	tpl.PersistentFlags().StringVarP(&dataFile, "dataFile", "d", "", "指定 数据文件")
+	tpl.PersistentFlags().StringVarP(&dataFile, "dataFile", "d", "", "指定 数据文件，json 或 yaml 文件")
 	tpl.PersistentFlags().StringVarP(&tplFile, "tplFile", "t", "", "指定 模版文件")
 	tpl.PersistentFlags().StringVarP(&outFile, "outFile", "o", "", "指定 输出文件名")
 	rootCmd.AddCommand(tpl)

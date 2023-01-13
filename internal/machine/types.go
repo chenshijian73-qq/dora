@@ -220,7 +220,6 @@ func ConfigExample() *Config {
 
 func GenerateSeversTemplateFiles(configPath string) {
 	dataFilePath := fmt.Sprintf("%s/data.yaml", configPath)
-	fmt.Println("dataFilePath: ", dataFilePath)
 	dataFile, err := os.OpenFile(dataFilePath, os.O_CREATE|os.O_WRONLY, 0666)
 	common.PrintErrWithPrefixAndExit("open datafile error: ", err)
 	defer dataFile.Close()
