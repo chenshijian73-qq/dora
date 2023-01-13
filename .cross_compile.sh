@@ -2,30 +2,28 @@
 
 set -e
 
-BUILD_VERSION="1.0.0-beta"
+BUILD_VERSION="2.0.0"
 BUILD_DATE=$(date "+%F %T")
 COMMIT_SHA1=$(git rev-parse HEAD)
 
 TARGET_DIR="dist"
 TARGET_NAME="dora"
 PLATFORMS="darwin/amd64 darwin/arm64 linux/386 linux/amd64 linux/arm linux/arm64"
-COMMANDS="json2csv version ctx sprint"
 
 rm -rf ${TARGET_DIR}
 mkdir ${TARGET_DIR}
 
-instal_path=$(echo ${GOPATH}|awk -F ":" '{print$1}')
+go_install_path=$(echo ${GOPATH}|awk -F ":" '{print$1}')
+install_path="/usr/local/bin"
 
 if [ "$1" == "install" ]; then
-  echo "install to ${instal_path}"
-  go build -o ${instal_path}/dora -ldflags \
+  echo "install to ${install_path}"
+  go build -o ${go_install_path}/dora -ldflags \
     "-X 'github.com/chenshijian73-qq/doraemon/cmd.Version=${BUILD_VERSION}' \
     -X 'github.com/chenshijian73-qq/doraemon/cmd.BUILD_DATE=${BUILD_DATE}' \
     -X 'github.com/chenshijian73-qq/doraemon/cmd.CommitID=${COMMIT_SHA1}' "
-  for cmd in ${COMMANDS}; do
-      echo "install => ${instal_path}/${cmd}"
-      ln -sf ${instal_path}/dora ${instal_path}/${cmd}
-  done
+  echo "install => ${install_path}/dora"
+  ln -sf ${go_install_path}/dora ${install_path}/dora
 elif [ "$1" == "uninstall" ]; then
     echo "remove => ${GOPATH}/bin/csj"
     rm -f ${GOPATH}/bin/csj
@@ -33,6 +31,7 @@ elif [ "$1" == "uninstall" ]; then
         echo "remove => ${GOPATH}/bin/${cmd}"
         rm -f ${GOPATH}/bin/${cmd}
     done
+    rm -rf ${install_path}/dora
 else
   for pl in ${PLATFORMS}; do
       export GOOS=$(echo "${pl}" | cut -d'/' -f1)
