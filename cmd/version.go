@@ -12,8 +12,8 @@ var bannerBase64 = "ICAgICAgICBDQ0NDQ0NDQ0NDQ0NDICAgICBPT09PT09PT08gICAgIERERERE
 var versionTpl = `%c[%d;%d;%dm%s%c[0m
 Name: dora
 Version: %s
-Arch: %s
 BuildDate: %s
+Arch: %s
 CommitID: %s\n
 `
 
@@ -21,6 +21,7 @@ var (
 	Version   string
 	BuildDate string
 	CommitID  string
+	Arch      string
 )
 
 var versionCmd = &cobra.Command{
@@ -28,7 +29,7 @@ var versionCmd = &cobra.Command{
 	Short: "Show version",
 	Run: func(cmd *cobra.Command, args []string) {
 		banner, _ := base64.StdEncoding.DecodeString(bannerBase64)
-		fmt.Printf(versionTpl, 0x1B, 0, 0, 36, banner, 0x1B, Version, BuildDate, runtime.GOOS+"/"+runtime.GOARCH, BuildDate, CommitID)
+		fmt.Printf(versionTpl, 0x1B, 0, 0, 36, banner, 0x1B, Version, BuildDate, runtime.GOOS+"/"+runtime.GOARCH, CommitID)
 	},
 }
 

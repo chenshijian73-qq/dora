@@ -20,7 +20,7 @@ if [ "$1" == "install" ]; then
   echo "install to ${install_path}"
   go build -o ${go_install_path}/dora -ldflags \
     "-X 'github.com/chenshijian73-qq/doraemon/cmd.Version=${BUILD_VERSION}' \
-    -X 'github.com/chenshijian73-qq/doraemon/cmd.BUILD_DATE=${BUILD_DATE}' \
+    -X 'github.com/chenshijian73-qq/doraemon/cmd.BuildDate=${BUILD_DATE}' \
     -X 'github.com/chenshijian73-qq/doraemon/cmd.CommitID=${COMMIT_SHA1}' "
   echo "install => ${install_path}/dora"
   ln -sf ${go_install_path}/dora ${install_path}/dora
