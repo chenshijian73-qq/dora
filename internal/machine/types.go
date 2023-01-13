@@ -1,8 +1,12 @@
 package machine
 
 import (
+	"bufio"
 	"errors"
+	"fmt"
+	common "github.com/chenshijian73-qq/doraemon/pkg"
 	"io/ioutil"
+	"os"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -197,6 +201,7 @@ func ConfigExample() *Config {
 		Basic: BasicServerConfig{
 			User:     "root",
 			Password: "password",
+			Port:     22,
 		},
 		Servers: Servers{
 			{
@@ -211,4 +216,23 @@ func ConfigExample() *Config {
 		},
 		MaxProxy: 5,
 	}
+}
+
+func GenerateSeversTemplateFiles(configPath string) {
+	dataFilePath := fmt.Sprintf("%s/data.yaml", configPath)
+	fmt.Println("dataFilePath: ", dataFilePath)
+	dataFile, err := os.OpenFile(dataFilePath, os.O_CREATE|os.O_WRONLY, 0666)
+	common.PrintErrWithPrefixAndExit("open datafile error: ", err)
+	defer dataFile.Close()
+	dataWriter := bufio.NewWriter(dataFile)
+	dataWriter.Write([]byte(Data_file))
+	dataWriter.Flush()
+
+	tplFilePath := fmt.Sprintf("%s/servers.tpl", configPath)
+	tplFile, err := os.OpenFile(tplFilePath, os.O_CREATE|os.O_WRONLY, 0666)
+	common.PrintErrWithPrefixAndExit("open datafile error: ", err)
+	defer tplFile.Close()
+	tplWriter := bufio.NewWriter(tplFile)
+	tplWriter.Write([]byte(Tpl_File))
+	tplWriter.Flush()
 }

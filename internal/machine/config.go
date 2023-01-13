@@ -14,7 +14,10 @@ import (
 const (
 	CCSEnvConfigDir = "CCS_CONFIG_DIR"
 	CurrentContext  = ".current"
+	ConfigPath      = ".dora"
 	BasicConfig     = "basic.yaml"
+	TplFile         = "template.tpl"
+	DataFile        = "data.yaml"
 )
 
 var (
@@ -47,7 +50,7 @@ func LoadConfig() {
 			configDir = strings.Replace(configDir, "~", home, 1)
 		}
 	} else {
-		configDir = filepath.Join(home, ".ccs")
+		configDir = filepath.Join(home, ConfigPath)
 	}
 
 	// check config dir if it not exist
@@ -146,4 +149,7 @@ func initConfig(dir string) {
 	common.CheckAndExit(ConfigExample().WriteTo(filepath.Join(dir, BasicConfig)))
 	// set current config to default
 	common.CheckAndExit(ioutil.WriteFile(filepath.Join(dir, CurrentContext), []byte(BasicConfig), 0644))
+	//
+	fmt.Println("hello")
+	GenerateSeversTemplateFiles(dir)
 }

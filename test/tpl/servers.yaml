@@ -1,0 +1,10 @@
+servers:
+  namePrefix: dev-
+  host:
+    - 1.1.1.1
+    - 2.2.2.2
+  port: 36000
+  tag:
+    - dev
+  user: root
+  password: C0ding@2022!
