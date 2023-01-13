@@ -4,7 +4,7 @@ var Tpl_File = `{{- $root := . -}}
 servers:
 {{- range .servers.host }}
 # 服务器名称
-- name: {{ $root.servers.namePrefix }}{{ (split "." .)._0 }}
+- name: {{ $root.servers.namePrefix }}{{ (split "." .)._3 }}
   # 服务器地址
   address: {{ . }}
   # 服务器端口

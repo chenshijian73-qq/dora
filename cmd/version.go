@@ -14,7 +14,7 @@ Name: dora
 Version: %s
 Arch: %s
 BuildDate: %s
-CommitID: %s
+CommitID: %s\n
 `
 
 var (
