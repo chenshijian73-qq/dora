@@ -1,0 +1,1348 @@
+alert:
+  # IaaS 告警指标
+  - name: IaaS
+    rules:
+      - alert: 节点发生过重启
+        annotations:
+          description:  >-
+            节点 {{ $labels.instance }}  发生过重启，最近一次启动运行时间为 {{ $value }} 分钟
+          summary: 节点发生过重启
+        expr: round((time() - node_boot_time_seconds{job="node-exporter"}) / 60 ) < 2
+        for: 0s
+        labels:
+          group: IaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            节点重启将导致当前节点上的容器发生驱逐，部分无状态的容器可能会异常，持续关注是否自动恢复！
+      - alert: Node 机器时钟未同步
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 时钟未同步, 节点时钟误差为 {{ $value }}s
+          summary: Node 机器时钟未同步, 节点时钟最大误差大于 15s
+        expr: node_timex_maxerror_seconds >= 15 and min_over_time(node_timex_sync_status[5m]) == 0
+        for: 2m
+        labels:
+          group: IaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 机器时钟未同步
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 时钟未同步, 节点时钟误差为 {{ $value }}s
+          summary: Node 机器时钟未同步, 节点时钟最大误差大于 30s
+        expr: node_timex_maxerror_seconds >= 30 and min_over_time(node_timex_sync_status[5m]) == 0
+        for: 2m
+        labels:
+          group: IaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node Unknown 状态异常
+        annotations:
+          description:  >-
+            {{ $labels.node }} Node Unknown 状态异常, 原因为 {{ $labels.condition }}
+          summary: Node Unknown 状态异常
+        expr: kube_node_status_condition{status="unknown"} * on(node) group_left(label_node) (kube_node_labels) > 0
+        for: 2m
+        labels:
+          group: IaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: 多 Node Unknown 状态异常
+        annotations:
+          description:  >-
+            Node Unknown 状态异常，数量为 {{ $value }}
+          summary: 多 Node Unknown 状态异常
+        expr: count(kube_node_status_condition{status="unknown"} >0) >= 2
+        for: 2m
+        labels:
+          group: IaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 状态异常
+        annotations:
+          description:  >-
+            Node {{ $labels.node }} 状态异常
+          summary: >-
+            Node 状态异常
+        expr: kube_node_status_condition{job=~".*kube-state-metrics",condition="Ready",status="true"} * on(node) group_left(label_node) (kube_node_labels) == 0
+        for: 2m
+        labels:
+          group: IaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 状态异常
+        annotations:
+          description:  >-
+            Node 状态异常超过两个，数量为 {{ $value }}
+          summary: >-
+            Node 状态异常较多
+        expr: count(kube_node_status_condition{job=~".*kube-state-metrics",condition="Ready",status="true"} == 0) >= 2
+        for: 2m
+        labels:
+          group: IaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 打开文件句柄 fd 数使用率过高
+        annotations:
+          description:  >-
+            Node 节点 {{ $labels.instance }} 打开文件句柄 fd 数使用率过高超过 40%, 当前为 {{ $value }}%
+          summary: >-
+            Node 打开文件句柄 fd 数使用率过高 80%
+        expr: round(100*(node_filefd_allocated/node_filefd_maximum), 0.01) > 80
+        for: 2m
+        labels:
+          group: IaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            在 Linux 系统中，`fs.file-max` 是一个重要的系统参数，用于控制系统最大打开文件句柄数量。打开文件句柄是指应用程序打开文件或网络连接时分配的内核资源。如果系统中打开的文件句柄数量超过了系统参数 `fs.file-max` 的设定值，就会出现“too many open files”等错误，导致系统性能下降或应用程序运行异常。
+            要设置 `fs.file-max` 参数，可以通过以下步骤：
+            1. 使用 root 用户登录 Linux 系统。
+            2. 打开 `/etc/sysctl.conf` 文件，如果该文件不存在则新建一个。
+            3. 在文件末尾添加 `fs.file-max = <max_number>`，其中 `<max_number>` 是你要设置的最大文件句柄数。例如 `fs.file-max = 1000000`。
+            4. 保存并关闭文件。
+            5. 执行 `sysctl -p` 命令，使配置文件生效。
+            注意，修改 `fs.file-max` 参数需要重启系统才能生效。另外，如果应用程序需要大量打开文件句柄，还需要通过 `ulimit` 命令或 `/etc/security/limits.conf` 文件设置应用程序的最大文件句柄数，以避免因为系统参数限制导致的错误。
+      - alert: Node 文件系统 inode 使用率高
+        annotations:
+          description:  >-
+            节点 {{ $labels.instance }} 的 {{ $labels.device }} 文件系统中的可用文件数占比是否小于 20% 或者 可用文件数少于 10000
+          summary: >-
+            Node文件系统 inode 使用率高
+        expr: 10 < 100 * (node_filesystem_files_free{device!~"lxcfs|nsfs"} / node_filesystem_files) < 20 or 2000 < node_filesystem_files_free{device!~"lxcfs|nsfs"} < 10000
+        for: 2m
+        labels:
+          group: IaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 文件系统 inode 快耗尽
+        annotations:
+          description:  >-
+            节点 {{ $labels.instance }} 的 {{ $labels.device }} 文件系统中的可用文件数占比是否小于 10% 或者 可用文件数少于 2000
+          summary: >-
+            Node文件系统 inode 快耗尽
+        expr: 100 * (node_filesystem_files_free{device!~"lxcfs|nsfs"} / node_filesystem_files) <= 10 or node_filesystem_files_free{device!~"lxcfs|nsfs"} < 2000
+        for: 2m
+        labels:
+          group: IaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 节点 IOPS 使用率较高
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 节点 {{ $labels.device }} 磁盘的 IOPS 使用率较高，当前负荷为 {{ $value }}%
+          summary: >-
+            Node 节点 IOPS 使用率较高
+        expr: 90 < round(100 * rate(node_disk_io_time_seconds_total{job="node-exporter"}[1m]) * on(instance) group_left(nodename) (node_uname_info), 0.01) < 98
+        for: 5m
+        labels:
+          group: IaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 节点 IOPS 使用率过高
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 节点 {{ $labels.device }} 磁盘的 IOPS 使用率过高, 当前负荷为 {{ $value }}%
+          summary: >-
+            Node 节点 IOPS 使用率过高
+        expr: round(100 * rate(node_disk_io_time_seconds_total{job="node-exporter"}[1m]) * on(instance) group_left(nodename) (node_uname_info), 0.01) >= 98
+        for: 5m
+        labels:
+          group: IaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 文件系统空间使用率高
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 文件系统 {{ $labels.device }} 的空间使用率高，当前剩余可使用率为 {{ $value }}%
+          summary: >-
+            Node 文件系统空间使用率高
+        expr: 10 < round(node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100, 0.01) < 15 and node_filesystem_avail_bytes / 1024 / 1024 / 1024 < 500 and  node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        for: 2m
+        labels:
+          group: IaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 文件系统空间快耗尽
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 文件系统 {{ $labels.device }} 空间快耗尽，当前可使用率为 {{ $value }}%
+          summary: >-
+            Node 文件系统空间快耗尽
+        expr: round(node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100, 0.01) <= 10 and node_filesystem_avail_bytes / 1024 / 1024 / 1024 < 100 and   node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        for: 2m
+        labels:
+          group: IaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 文件系统只读告警
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 节点文件系统 {{ $labels.device }} 只读告警
+          summary: >-
+            Node 文件系统只读告警
+        expr: node_filesystem_readonly{job="node-exporter",fstype!=""} == 1
+        for: 2m
+        labels:
+          group: IaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 内存使用率较高
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 内存使用率较高，当前为 {{ $value }}%
+          summary: >-
+            Node 内存使用率较高
+        expr: 85 < round(((1-node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * on(instance) group_left(nodename) (node_uname_info))*100, 0.01) < 95
+        for: 10m
+        labels:
+          group: IaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node内存使用率过高
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 内存使用率过高，当前为 {{ $value }}%
+          summary: >-
+            Node 内存使用率过高
+        expr: round(((1-node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * on(instance) group_left(nodename) (node_uname_info))*100, 0.01) >= 95
+        for: 10m
+        labels:
+          group: IaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node CPU 使用率较高
+        annotations:
+          description:  >-
+            {{ $labels.instance }} CPU 使用率较高，当前为 {{ $value }}%
+          summary: >-
+            Node CPU 使用率较高
+        expr: 85 < round( 100*(1 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))) * on(instance) group_left(nodename) (node_uname_info)), 0.01) < 95
+        for: 10m
+        labels:
+          group: IaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node CPU 使用率过高
+        annotations:
+          description:  >-
+            {{ $labels.instance }} CPU 使用率过高，当前为 {{ $value }}%
+          summary: >-
+            Node CPU 使用率过高
+        expr: round( 100*(1 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))) * on(instance) group_left(nodename) (node_uname_info)), 0.01) >= 95
+        for: 10m
+        labels:
+          group: IaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node Tcp 连接数量较高
+        annotations:
+          description:  >-
+            {{ $labels.instance }}  Tcp 连接数量较高
+          summary: >-
+            Node Tcp 连接数量较高
+        expr: 20000 < node_netstat_Tcp_CurrEstab{instance=~"^(\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}):(\\d{1,5})$"}/2 < 25000
+        for: 2m
+        labels:
+          group: IaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node Tcp 连接数量太高
+        annotations:
+          description:  >-
+            {{ $labels.instance }} Tcp 连接数量太高
+          summary: >-
+            Node Tcp 连接数量太高
+        expr: node_netstat_Tcp_CurrEstab{instance=~"^(\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}):(\\d{1,5})$"}/2 >= 25000
+        for: 2m
+        labels:
+          group: IaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Node 网卡状态不稳定
+        annotations:
+          description:  >-
+            {{ $labels.instance }} 网卡 {{ $labels.device }} 状态不稳定
+          summary: >-
+            Node 网卡状态不稳定
+        expr: changes(node_network_up{job="node-exporter",device!~"veth.+"}[2m]) > 2
+        for: 2m
+        labels:
+          group: IaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: 监控 exporter 服务 metrics 接口采集数据异常
+        annotations:
+          description:  >-
+            serviceMonitor 对象 {{$labels.service}} 拉取监控数据异常，请确认 {{ $labels.namespace }} 空间下，Pod 应用 {{ $labels.pod }} 的 {{ $labels.endpoint }} 接口( {{ $labels.instance }} )有效性
+          summary: >-
+            监控 exporter 服务 metrics 接口采集数据异常
+        #expr: up{job!~"(node|cadvisor|mariadb)", instance=~"^(\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}):(\\d{1,5})$"} == 0
+        expr: up{job!~"(node|cadvisor|mariadb)", service!="spin-clouddriver-caching", instance=~"^(\\d{1,3}.\\d{1,3}.\\d{1,3}.\\d{1,3}):(\\d{1,5})$"} == 0
+        for: 2m
+        labels:
+          group: IaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+  # CaaS 容器层告警指标
+  - name: CaaS
+    rules:
+      - alert: K8s 节点 NotReady
+        annotations:
+          description:  >-
+            K8s 集群中 {{ $labels.node }} 节点状态为 NotReady，将影响当前节点上的所有 Pod 容器，请重点关注。
+          summary: >-
+            K8s 节点状态异常/不可用
+        expr: kube_node_status_condition{condition="Ready",job="kube-state-metrics",status="true"} == 0
+        for: 0s
+        labels:
+          group: CaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            节点异常可能是高负载、磁盘空间满、网络异常等原因引起，如以上问题都不存在且长时间未恢复，可以尝试登录到所在节点执行 "docker restart kubelert" ，并观察节点状态是否恢复。
+      - alert: K8s 节点发生驱逐
+        annotations:
+          description:  >-
+            K8s 集群中 {{ $labels.node }} 节点触发驱逐信号（DiskPressure），将影响当前节点上的所有 Pod 容器，请检查 docker 引擎所在的磁盘分区是否超出 85%。
+          summary: >-
+            K8s 节点发生驱逐（DiskPressure）
+        expr: kube_node_status_condition{condition="DiskPressure",status="true"} > 0
+        for: 0s
+        labels:
+          group: CaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            节点发生驱逐一般是磁盘空间满，一般可以通过清理磁盘文件或者扩容解决，如磁盘空间恢复后且长时间未恢复，可以尝试登录到所在节点执行 "docker restart kubelert" ，并观察节点状态是否恢复。
+      - alert: Pod PersistentVolume 状态异常
+        annotations:
+          description:  >-
+            {{ $labels.namespace }} 空间下，{{ $labels.persistentvolume }} 状态异常
+          summary: >-
+            Pod PersistentVolume 状态异常
+        expr: kube_persistentvolume_status_phase{phase=~"Failed|Pending"} > 0
+        for: 2m
+        labels:
+          group: CaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Pod 内存使用率高
+        annotations:
+          description:  >-
+            {{ $labels.namespace }} 空间下，Pod 应用 {{ $labels.pod }} 内存使用率高，当前利用率为 {{ $value }}%
+          summary: >-
+            Pod 内存使用率高
+        expr: round(100 * (sum(container_memory_working_set_bytes{image!="", container!="POD"}) by (cluster, namespace, pod, container) /sum(kube_pod_container_resource_limits_memory_bytes) by (cluster, namespace, pod, container)), 0.01) > 98
+        for: 2m
+        labels:
+          group: CaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Pod CPU 使用率高
+        annotations:
+          description:  >-
+            {{ $labels.namespace }} 空间下，Pod 应用 {{ $labels.pod }} CPU 使用率高 {{ $value }}%
+          summary: >-
+            Pod CPU 使用率高
+        expr: round(100 * (sum(rate(container_cpu_usage_seconds_total{image!="", container!="POD", container!="git-backup"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores) by (cluster, namespace, pod, container)), 0.01) > 85
+        for: 2m
+        labels:
+          group: CaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Pod OOMKill
+        annotations:
+          description:  >-
+            {{ $labels.namespace }} 空间下，Pod 应用 {{ $labels.pod }} 发生 OOMKill，建议调整当前内存 limit 上限
+          summary: >-
+            Pod OOMKill
+        expr: (kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total offset 5m > 0) * ignoring(reason) kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} > 0
+        for: 2m
+        labels:
+          group: CaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Pod 频繁重启
+        annotations:
+          description:  >-
+            检测到 {{ $labels.namespace }} 空间下，Pod 应用 {{ $labels.pod }} 频繁重启，容器 {{ $labels.container }} 连续 15 分钟内重启超过 3 次，实际重启次数为 {{ $value }} 次
+          summary: >-
+            Pod 频繁重启
+        expr: round(increase(kube_pod_container_status_restarts_total{}[15m])) > 3
+        for: 2m
+        labels:
+          group: CaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Pod 副本数异常
+        annotations:
+          description:  >-
+            {{ $labels.namespace }} 空间下，{{ $labels.name }} 副本数异常，可用副本数为预设的 {{ $value }}%
+          summary: >-
+            Pod 副本数异常
+        expr: label_replace(sum by(deployment, namespace) (kube_deployment_status_replicas_available{} / kube_deployment_spec_replicas * 100) < 50,  "name", "$1", "deployment", "(.*)")  or label_replace(sum by(namespace, statefulset) (kube_statefulset_status_replicas_ready{} / kube_statefulset_replicas * 100) < 50,  "name", "$1", "statefulset", "(.*)")
+        for: 2m
+        labels:
+          group: CaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Pod container 状态异常
+        annotations:
+          description:  >-
+            {{ $labels.namespace }} 空间下，Pod 应用 {{ $labels.pod }} 中 {{ $labels.container }} 容器状态异常，请关注应用状态是否自动恢复！
+          summary: >-
+            Pod container 状态异常
+        expr: sum by (namespace, pod, container, cluster) (kube_pod_container_status_waiting_reason{}) > 0
+        for: 2m
+        labels:
+          group: CaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Pod 状态异常
+        annotations:
+          description:  >-
+            {{ $labels.namespace }} 空间下，Pod 应用 {{ $labels.pod }} 状态异常，请关注应用状态是否自动恢复！
+          summary: >-
+            Pod 状态异常
+        expr: sum by (namespace, pod, cluster) ( max by(namespace, pod, cluster) ( kube_pod_status_phase{phase=~"Pending|Unknown|Failed"}  ) * on(namespace, pod, cluster) group_left(owner_kind) topk by(namespace, pod) (    1, max by(namespace, pod, owner_kind, cluster) (kube_pod_owner{owner_kind!="Job"})  )) > 0
+        for: 2m
+        labels:
+          group: CaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: Pod 内容器重启
+        annotations:
+          description:  >-
+            检测到 {{ $labels.namespace }} 空间下，Pod 应用 {{ $labels.pod }} 中的 {{ $labels.container }} 容器发生 {{ $value }} 次重启
+          summary: >-
+            Pod 内容器发生重启
+        expr: round(increase(kube_pod_container_status_restarts_total{}[1m])) > 0
+        for: 0s
+        labels:
+          group: CaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: k8s 客户端访问 APIServer 证书快过期
+        annotations:
+          description:  >-
+            k8s 客户端访问 APIServer 证书快过期，有效期不足 1 天
+          summary: >-
+            k8s 客户端访问 APIServer 证书快过期
+        expr: apiserver_client_certificate_expiration_seconds_count{job=~".*apiserver"} > 0 and on(job) histogram_quantile(0.01, sum by (cluster, job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job=~".*apiserver"}[5m]))) < 86400
+        for: 2m
+        labels:
+          group: PaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+    # - alert: PodDown-all # 15s 采集 + 15s 扫描规则，规则是1分钟前存在 pod 为 not ready 的 pod，15s 扫描一次的间隔，至少能扫描 3次，所以一定会发送
+    #   expr: min_over_time(kube_pod_container_status_ready{pod!~".*job.*|backup.*|minio-backup.*|helm-operation.*|clean-docker|dynamic-index-patterns|node-shell.*|.*jenkins.*|elasticsearch-backup.*|pgsql-backup.*|mysql-backup.*|neuvector-.*"} [1m])== 0
+    #   for: 3m
+    #   annotations:
+    #     summary: '检测到应用 Pod 发生重启'
+    #     description: '检测到 {{ $labels.namespace }} 名称空间中，{{ $labels.pod }} 应用 Pod 的 {{ $labels.container }} 容器最近 1 分钟内发生重启，请关注应用状态是否自动恢复！'
+    #   labels:
+    #     group: CaaS
+    #     severity: 预警
+    #     level: P5
+    #     members: xiao
+    #     help_url: |-
+    #       [Kubernetes 中文指南/云原生应用架构实战手册](https://jimmysong.io/kubernetes-handbook/cloud-native/cloud-native-definition.html)
+  # PaaS 中间件告警指标
+  - name: PaaS
+    rules:
+      - alert: RabbitMQ 队列积压默认阈值告警
+        annotations:
+          description:  >-
+            {{ $labels.queue }} 队列积压超过阈值警告
+          summary: >-
+            RabbitMQ 队列积压超过阈值警告
+        expr: rabbitmq_queue_messages{queue!="git.backup.default.q"} > 10000
+        for: 2m
+        labels:
+          group: PaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 队列积压告警
+        annotations:
+          description:  >-
+            {{ $labels.queue }} 队列积压告警
+          summary: >-
+            L4 级别 RabbitMQ 队列积压告警
+        expr: cluster:chart_rabbitmq_queue_L4:group> 5000
+        for: 2m
+        labels:
+          group: PaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 队列积压告警
+        annotations:
+          description:  >-
+            {{ $labels.queue }} 队列积压告警
+          summary: >-
+            L3 级别 RabbitMQ 队列积压告警
+        expr: cluster:chart_rabbitmq_queue_L3:group{self="1"} > 3000
+        for: 2m
+        labels:
+          group: PaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 队列积压告警
+        annotations:
+          description:  >-
+            {{ $labels.queue }} 队列积压告警
+          summary: >-
+            L2 级别 RabbitMQ 队列积压告警
+        expr: cluster:chart_rabbitmq_queue_L2:group{self="1"} > 1000
+        for: 2m
+        labels:
+          group: PaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 队列积压告警
+        annotations:
+          description:  >-
+            {{ $labels.queue }} 队列积压告警
+          summary: >-
+            L1 级别 RabbitMQ 队列积压告警
+        expr: cluster:chart_rabbitmq_queue_L1:group{self="1", queue!="sync_update_role_permission_queue"} > 500
+        for: 2m
+        labels:
+          group: PaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      # - alert: RabbitMQ 消费者丢失
+      #   annotations:
+      #     description:  >-
+      #       {{ $labels.queue }} 消费者丢失
+      #     summary: >-
+      #       RabbitMQ 消费者丢失
+      #   expr: rabbitmq_queue_consumers{self="1",queue!~"^stomp-subscription.*$|e_import_project|e_import_repo|e_import_repo_result|sync_update_role_permission_queue|workflow-depot-init|ci.prom.hist.cvm.jenkins.latency|depot.statistics|git-fetch-repo-result|git-import-repo-result|page_action|56465db1-3ee7-4930-ba43-ba21a83bf3b3|adapter.upgrade.delay.queue|collaboration-template-apply|git-rpc-record|e-admin-queue-worker|event_dispatcher_queue|queue.branch|queue.cd_application|queue.cd_pipeline|queue.cd_pipeline_execution|queue.code_review|queue.codescan|queue.comment|queue.commit|queue.department|queue.depot|queue.issue|queue.issue_relation|queue.issue_status_change_logs|queue.iteration|queue.limit.exceeded|queue.limit.exceeded.dead|queue.merge_request|queue.program|queue.project|queue.scanjob|queue.team|queue.team|queue.user|queue.user|queue.user|queue.user.issue|queue_ci_build|queue_ci_job|queue_cr|queue_testing_auto_case|queue_testing_case|queue_testing_case_issue"} < 1
+      #   for: 30m
+      #   labels:
+      #     group: PaaS
+      #     level: P4
+      #     severity: 预警
+      #     members: xiao
+      #     help_url: |-
+      #       [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 集群连接数数过高
+        annotations:
+          description:  >-
+            RabbitMQ 集群单个节点 {{ $labels.pod }} 连接数数过高
+          summary: >-
+            RabbitMQ 集群连接数数过高
+        expr: 5000 < max by(pod) (rabbitmq_connections{job=~".*rabbitmq.*"}) < 8000
+        for: 2m
+        labels:
+          group: PaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ集群连接数数太高
+        annotations:
+          description:  >-
+            RabbitMQ 集群单个节点 {{ $labels.pod }} 连接数数太高
+          summary: >-
+            RabbitMQ 集群连接数数太高
+        expr: max by(pod) (rabbitmq_connections{job=~".*rabbitmq.*"}) >= 8000
+        for: 2m
+        labels:
+          group: PaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 集群异常
+        annotations:
+          description:  >-
+            RabbitMQ 集群异常, 存活节点小于两个
+          summary: >-
+            RabbitMQ 集群异常
+        expr: sum(rabbitmq_up == 1)< 2
+        for: 2m
+        labels:
+          group: PaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 节点存活异常
+        annotations:
+          description:  >-
+            Pod 应用 {{ $labels.pod }} 节点存活异常
+          summary: >-
+            RabbitMQ 节点存活异常
+        expr: rabbitmq_up == 0
+        for: 2m
+        labels:
+          group: PaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 队列异常
+        annotations:
+          description:  >-
+            RabbitMQ 队列 {{ $labels.queue }} 异常
+          summary: >-
+            RabbitMQ 队列异常
+        expr: rabbitmq_queue_state{self="1"} == 0
+        for: 2m
+        labels:
+          group: PaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 磁盘使用率较高
+        annotations:
+          description:  >-
+            {{ $labels.pod }} 磁盘使用率较高，当前为 {{ $value }}%
+          summary: >-
+            RabbitMQ 磁盘使用率较高
+        expr: 10 < round(100 * (rabbitmq_node_disk_free_limit/rabbitmq_node_disk_free{self="1"}), 0.01) < 90
+        for: 2m
+        labels:
+          group: PaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 磁盘使用率过高
+        annotations:
+          description:  >-
+            {{ $labels.pod }} 磁盘使用率过高，当前为 {{ $value }}%
+          summary: >-
+            RabbitMQ 磁盘使用率过高
+        expr: round(100 * (rabbitmq_node_disk_free_limit/rabbitmq_node_disk_free{self="1"}), 0.01)>=90
+        for: 2m
+        labels:
+          group: PaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 内存使用率较高
+        annotations:
+          description:  >-
+            {{ $labels.pod }} 内存使用率较高，当前为 {{ $value }}%
+          summary: >-
+            RabbitMQ 内存使用率较高
+        expr: 70 < round(100 * (rabbitmq_node_mem_used{self="1"} / rabbitmq_node_mem_limit), 0.01) < 90
+        for: 2m
+        labels:
+          group: PaaS
+          level: P3
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 内存使用率过高
+        annotations:
+          description:  >-
+            {{ $labels.pod }} 内存使用率过高，当前为 {{ $value }}%
+          summary: >-
+            RabbitMQ 内存使用率过高
+        expr: round(100 * (rabbitmq_node_mem_used{self="1"} / rabbitmq_node_mem_limit), 0.01) >= 90
+        for: 2m
+        labels:
+          group: PaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: RabbitMQ 代码仓库备份 队列积压告警
+        annotations:
+          description:  >-
+            RabbitMQ 代码仓库备份 队列积压告警
+          summary: >-
+            RabbitMQ 代码仓库备份 队列积压告警
+        expr: rabbitmq_queue_messages{queue="git.backup.default.q"} > 50000
+        for: 2m
+        labels:
+          group: PaaS
+          level: P5
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [RabbitMQ运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMTzuAVJdMSUWJ1fnq2r?scode=AE8AMgffABAC28AccqAWgAfQZAAJk)
+      - alert: Etcd Leader存活异常
+        annotations:
+          description:  >-
+            Etcd Leader 存活异常
+          summary: >-
+            Etcd Leader 存活异常
+        expr: sum by(namespace,instance) (etcd_server_has_leader{service="etcd"}) == 0
+        for: 2m
+        labels:
+          group: PaaS
+          level: P4
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [Etcd运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMT6hVsH0vREKgRQozgS?scode=AE8AMgffABAqDnOTldAWgAfQZAAJk)
+      - alert: Etcd 集群异常
+        annotations:
+          description:  >-
+            Etcd 集群异常
+          summary: >-
+            Etcd 集群异常
+        expr: sum by(namespace,service) (up{namespace!="kube-system", job=~".*etcd.*"} == bool 1) < ((count by(namespace,service) (up{job=~".*etcd.*"}) + 1) / 2)
+        for: 2m
+        labels:
+          group: PaaS
+          level: P2
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [Etcd运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMT6hVsH0vREKgRQozgS?scode=AE8AMgffABAqDnOTldAWgAfQZAAJk)
+      - alert: 分流Nginx可用性告警
+        annotations:
+          description:  >-
+            分流 Nginx 可用性告警
+          summary: >-
+            分流 Nginx 可用性告警
+        expr: 100 * (sum by(namespace,job) ((rate(nginx_vts_server_requests_total{code!~"5xx|total"}[1m]))) / sum by(namespace, job)((rate(nginx_vts_server_requests_total{code=~"1xx|2xx|3xx|4xx|5xx"}[1m]))))< 99.9
+        for: 2m
+        labels:
+          group: PaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+      - alert: 标准化Nginx可用性告警
+        annotations:
+          description:  >-
+            标准化 Nginx 可用性告警
+          summary: >-
+            标准化 Nginx 可用性告警
+        expr: 100 * (sum by(namespace,job) ((rate(nginx_vts_server_requests_total{namespace!="",code!~"5xx|total"}[1m]))) / sum by(namespace, job)((rate(nginx_vts_server_requests_total{namespace!="",code=~"1xx|2xx|3xx|4xx|5xx"}[1m])))) < 99.9
+        for: 2m
+        labels:
+          group: PaaS
+          level: P1
+          severity: 告警
+          members: xiao
+          help_url: |-
+            []()
+
+      # --------------------- MiniO 对象存储告警规则 -------------------
+      - alert: MiniO 节点离线
+        annotations:
+          summary: "MiniO 集群节点离线"
+          description: "检测到 MiniO 服务 {{ $value }} 个节点脱离集群，请检查 {{ $labels.namespace }} 名称空间下的 MiniO 服务是否存在异常副本或者节点宕机"
+        for: 2m
+        expr: topk(1, max(minio_cluster_nodes_offline_total{}) by (namespace,pod,instance)) > 0
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P2
+          members: xiao
+          help_url: |-
+            [MiniO 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMFORKCdV8T0mSjQ9DMb?scode=AE8AMgffABAnvD5swVAPsA9wZHAH0)
+            [MinIO 扩容方案](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM9fQmYZMBRvmz2j0hSL?scode=AE8AMgffABAfvmugtbAPsA9wZHAH0)
+      - alert: Minio 集群磁盘离线
+        annotations:
+          summary: "Minio 磁盘离线"
+          description: "Minio 集群磁盘离线，发生掉盘现象，离线磁盘数 {{ $value }}，请及时处理修复!"
+        for: 10m
+        expr: topk(1, max(minio_cluster_disk_offline_total{}) by (namespace,pod,instance)) > 0
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P2
+          members: xiao
+          help_url: |-
+            [MiniO 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMFORKCdV8T0mSjQ9DMb?scode=AE8AMgffABAnvD5swVAPsA9wZHAH0)
+            [MinIO 扩容方案](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM9fQmYZMBRvmz2j0hSL?scode=AE8AMgffABAfvmugtbAPsA9wZHAH0)
+      - alert: Minio 存储池可用空间不足
+        annotations:
+          summary: "minio 存储池可用存储空间不足（低于20%）"
+          description: "pod {{ $labels.pod }} 可用空间不足，低于存储池总容量的 20%，目前剩下 {{ $value }}%，请评估是否需要扩容！"
+        for: 10m
+        expr: round(topk(1, avg(100 * minio_cluster_capacity_usable_free_bytes{job="minio"}/minio_cluster_capacity_usable_total_bytes{job="minio"}) by (namespace,pod,instance))) < 20
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P2
+          members: xiao
+          help_url: |-
+            [MiniO 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMFORKCdV8T0mSjQ9DMb?scode=AE8AMgffABAnvD5swVAPsA9wZHAH0)
+            [MinIO 扩容方案](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM9fQmYZMBRvmz2j0hSL?scode=AE8AMgffABAfvmugtbAPsA9wZHAH0)
+      # # --------------------- Etcd 存储告警规则 -------------------
+      - alert: ETCD 集群故障
+        annotations:
+          summary: "ETCD 集群故障，没有检测到 Leader 角色"
+          description: "检测到 {{ $labels.namespace }} 名称空间下的 ETCD 集群故障，没有检测到 leader 角色，请检查集群状态!"
+        for: 1m
+        expr: topk(1,max(etcd_server_has_leader{job="etcd"}) by (namespace, pod)) == 0
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P2
+          members: xiao
+          help_url: |-
+            [Etcd 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMT6hVsH0vREKgRQozgS?scode=AE8AMgffABAcSBpz8dAPsA9wZHAH0)
+            在 etcd 集群中，每个节点都可以成为 leader，负责处理客户端请求并维护数据一致性。如果当前 etcd 集群没有 leader，那么客户端将无法访问 etcd，无法读取或写入数据。
+            当前 etcd 集群没有 leader，可能存在故障或网络问题。
+      - alert: Etcd WAL (Write-Ahead Log) 日志写入磁盘延迟太高
+        annotations:
+          summary: "Etcd 同步延迟太高"
+          description: "Etcd 节点 {{ $labels.instance }} WAL (Write-Ahead Log) 日志写入磁盘延迟太高，2 分钟内平均每次同步超过 1s, 时间 {{ $value | printf \"%.2f\" }}"
+        for: 3m
+        expr: histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket{service="etcd"}[1m]))>1
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P2
+          members: xiao
+          help_url: |-
+            [Etcd 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMT6hVsH0vREKgRQozgS?scode=AE8AMgffABAcSBpz8dAPsA9wZHAH0)
+            WAL 是一种先写日志再写磁盘的机制，用于提高写入性能和数据安全。当 etcd 写入数据时，会先将数据写入 WAL 日志，然后异步地将数据写入磁盘。
+            当前指标记录了 WAL 日志磁盘写入操作的持续时间分布情况，可以用于监测 etcd 的写入性能和磁盘延迟情况。
+      - alert: Etcd WAL (Write-Ahead Log) 日志写入磁盘延迟太高
+        annotations:
+          summary: "Etcd WAL (Write-Ahead Log) 日志写入磁盘延迟太高"
+          description: "Etcd 节点 {{ $labels.instance }} WAL (Write-Ahead Log) 日志写入磁盘延迟太高，2 分钟内平均每次同步超过 500ms, 时间 {{ $value | printf \"%.2f\" }}"
+        for: 3m
+        expr: 1>histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket{service="etcd"}[1m]))>0.5
+        labels:
+          severity: 预警
+          group: PaaS
+          level: P4
+          members: xiao
+          help_url: |-
+            [Etcd 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMT6hVsH0vREKgRQozgS?scode=AE8AMgffABAcSBpz8dAPsA9wZHAH0)
+            WAL 是一种先写日志再写磁盘的机制，用于提高写入性能和数据安全。当 etcd 写入数据时，会先将数据写入 WAL 日志，然后异步地将数据写入磁盘。
+            当前指标记录了 WAL 日志磁盘写入操作的持续时间分布情况，可以用于监测 etcd 的写入性能和磁盘延迟情况。
+      - alert: etcd_leader_changes
+        annotations:
+          summary: "Etcd 发生 leader 选举"
+          description: "ETCD 主节点在 10 分钟内发生了 2 次 leader 选举，初步分析可能磁盘IO/网络存在波动，可以通过 etcd 日志检查是否存在同步延迟过高，触发选举是自动故障转移的一种表现，正常选举完后可以正常提供服务"
+        for: 0m
+        expr: increase(etcd_server_leader_changes_seen_total{job="etcd"}[10m]) > 2
+        labels:
+          severity: 预警
+          group: PaaS
+          level: P4
+          members: xiao
+          help_url: |-
+            [Etcd 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMT6hVsH0vREKgRQozgS?scode=AE8AMgffABAcSBpz8dAPsA9wZHAH0)
+
+      # # --------------------- Elasticsearch 搜索引擎告警规则 -------------------
+      - alert: ElasticsearchClusterRed
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 0m
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P2
+          members: xiao
+          help_url: |-
+            [Elasticsearch 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMGitx9mCvSR0nsf6W1C?scode=AE8AMgffABA16iu6UWAPsA9wZHAH0)
+        annotations:
+          summary: Elasticsearch 集群状态 Red
+          description: "{{ $labels.instance }} 名称空间下的 Elastic 集群状态 Red，存在不可用的主分片,此时执行查询虽然部分数据仍然可以查到，但实际上已经影响到索引读写"
+      - alert: ElasticsearchClusterYellow
+        expr: elasticsearch_cluster_health_status{color="yellow"} == 1
+        for: 0m
+        labels:
+          severity: 预警
+          group: PaaS
+          level: P4
+          members: xiao
+          help_url: |-
+            [Elasticsearch 运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMGitx9mCvSR0nsf6W1C?scode=AE8AMgffABA16iu6UWAPsA9wZHAH0)
+        annotations:
+          summary: Elasticsearch 集群状态 Yellow
+          description: "{{ $labels.instance }} 名称空间下的 Elastic 集群状态 Yellow，主分片可用，但是副本分片不可用。这种情况 Elasticsearch 集群所有的主分片已经分配了，但至少还有一个副本是未分配的。"
+
+      # # --------------------- 备份服务告警规则 -------------------
+      - alert: 备份任务执行失败
+        expr: backup_result == 0
+        for: 2m
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P2
+          members: xiao
+          help_url: |-
+            []()
+        annotations:
+          summary: 备份任务执行失败
+          description: "当前 【{{ $labels.scene}}】 场景的定时任务执行失败，备份类型为：{{ $labels.backup_type}}， 备份工具为： {{ $labels.backup_tool}} ， 备份计划为：{{ $labels.backup_schedule}}，执行备份的 Pod 为: {{ $labels.pod}}, 调度所在的节点为：{{ $labels.backup_node}} {{ $labels.node_name}}， 备份开始时间: {{ $labels.start}}, 备份结束时间: {{ $labels.end}}"
+
+      # --------------------- 基于 SaaS 云监控补充的告警规则 -------------------
+      - alert: 连接数利用率（Mariadb）
+        expr: max_over_time(mysql_global_status_threads_connected[1m]) / mysql_global_variables_max_connections * 100 > 40
+        for: 10m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: 连接数利用率（Mariadb）> 40%
+          description: 连接数利用率为 {{ $value }}%，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: CPU利用率（Mariadb）
+        expr: sum(rate(container_cpu_usage_seconds_total{image!="",container=~"mariadb.*"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores{container=~"mariadb.*"}) by (cluster, namespace, pod, container) * 100 > 75
+        for: 10m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: CPU利用率（Mariadb）> 75%
+          description: CPU利用率为 {{ $value }}% ，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 内存利用率（Mariadb）
+        expr: sum (container_memory_working_set_bytes{container !="",container!="POD",container=~"mariadb.*"}) by (container,pod,namespace)/ sum(container_spec_memory_limit_bytes{container !="",container!="POD",container=~"mariadb.*"}) by (container,pod,namespace) * 100 > 93
+        for: 10m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: 内存利用率（Mariadb）> 93%
+          description: 内存利用率为 {{ $value }}%，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 主从延迟时间（Mariadb）
+        expr: mysql_slave_status_master_server_id > 0 and ON (instance) (mysql_slave_status_seconds_behind_master - mysql_slave_status_sql_delay) > 10
+        for: 3m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: 主从延迟时间（Mariadb）
+          description: 主从延迟时间 > 10秒，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 【P1】核心 MYSQL 告警连接数利用率
+        expr: max_over_time(mysql_global_status_threads_connected[1m]) / mysql_global_variables_max_connections * 100 > 80
+        for: 5m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: 【P1】核心 MYSQL 告警连接数利用率 > 80%
+          description: 连接数利用率为 {{ $value }}%，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 【P1】核心 MYSQL 告警CPU利用率
+        expr: sum(rate(container_cpu_usage_seconds_total{image!="",container=~"mariadb.*"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores{container=~"mariadb.*"}) by (cluster, namespace, pod, container) *100 > 90
+        for: 5m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: 【P1】核心 MYSQL 告警 CPU 利用率 > 90%
+          description: CPU 利用率为 {{ $value }}% ，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 【P1】核心 MYSQL 告警内存利用率
+        expr: sum (container_memory_working_set_bytes{container !="",container!="POD",container=~"mariadb.*"}) by (container,pod,namespace)/ sum(container_spec_memory_limit_bytes{container !="",container!="POD",container=~"mariadb.*"}) by (container,pod,namespace) * 100 > 98
+        for: 5m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: 【P1】核心 MYSQL 告警内存利用率 > 98%
+          description: 核心 MYSQL 告警内存利用率为 {{ $value }}%，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 全表扫描数（Mariadb）
+        expr: rate(mysql_global_status_select_scan[1m]) >200
+        for: 3m
+        labels:
+          level: P5
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: 全表扫描数（Mariadb）
+          description: 全表扫描数 > 200次/秒，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 慢查询数（Mariadb）
+        expr: rate(mysql_global_status_slow_queries[1m])>200
+        for: 3m
+        labels:
+          level: P5
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [MariaDB主从数据库运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMHCD6cEU3QeiKC8MbyU?scode=AE8AMgffABAKPSfiXrAWgAfQZAAJk)
+            [Galera多主数据库快速恢复运维文档](- https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMrsywZ3WRTRe5qN5W9r?scode=AE8AMgffABAg4JIvzNAS0AwAbZAIM)
+        annotations:
+          summary: 慢查询数（Mariadb）
+          description: 慢查询数 > 200次，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: CPU利用率（PGSQL）
+        expr: sum(rate(container_cpu_usage_seconds_total{pod=~"postgresql-postgresql.*", container="postgresql"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores) by (cluster, namespace, pod, container) > 0.75
+        for: 5m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [PostgreSQL运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMIrz8V0UeTYuhJoQd0c?scode=AE8AMgffABAN4ELLgRAWgAfQZAAJk)
+        annotations:
+          summary: CPU利用率（PGSQL）
+          description: CPU利用率 > 75%，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 【P1】核心PGSQL告警CPU利用率
+        expr: sum(rate(container_cpu_usage_seconds_total{pod=~"postgresql-postgresql.*", container="postgresql"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores) by (cluster, namespace, pod, container) > 0.9
+        for: 5m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [PostgreSQL运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMIrz8V0UeTYuhJoQd0c?scode=AE8AMgffABAN4ELLgRAWgAfQZAAJk)
+        annotations:
+          summary: 【P1】核心PGSQL告警CPU利用率
+          description: CPU利用率 > 90%，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 【P1】PGSQL 可用空闲连接低于 10%
+        expr: (((sum(pg_settings_max_connections) by (server) - sum(pg_settings_superuser_reserved_connections) by (server)) - sum(pg_stat_activity_count) by (server)) / sum(pg_settings_max_connections) by (server)) * 100 < 10
+        for: 5m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [PostgreSQL运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMIrz8V0UeTYuhJoQd0c?scode=AE8AMgffABAN4ELLgRAWgAfQZAAJk)
+        annotations:
+          summary: 【P1】PGSQL 可用空闲连接低于 10%
+          description: PGSQL 可用空闲连接低于 10%, 为 {{ $value }}%
+      - alert: 【P3】PGSQL 主从同步延迟
+        expr: 0 < label_replace(pgpool2_pool_nodes_replication_delay, "hostname", "$1", "hostname", "(.*)\\..*") < 600
+        for: 3m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [PostgreSQL运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMIrz8V0UeTYuhJoQd0c?scode=AE8AMgffABAN4ELLgRAWgAfQZAAJk)
+        annotations:
+          summary: 【P3】PGSQL 主从同步延迟
+          description: 节点 {{ $labels.hostname }} 同步延迟了 {{ $value }}s，请及时查看 PGSQL 集群状态
+      - alert: 【P1】PGSQL 主从同步延迟 > 10min
+        expr: label_replace(pgpool2_pool_nodes_replication_delay, "hostname", "$1", "hostname", "(.*)\\..*") > 600
+        for: 3m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [PostgreSQL运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMIrz8V0UeTYuhJoQd0c?scode=AE8AMgffABAN4ELLgRAWgAfQZAAJk)
+        annotations:
+          summary: 【P1】PGSQL 主从同步延迟 > 10min
+          description: 节点 {{ $labels.hostname }} 同步延迟了 {{ $value }}s，请及时查看 PGSQL 集群状态
+      - alert: 【P1】PGSQL 集群发生主从切换
+        expr: count(changes(pgpool2_pool_nodes_status{role="primary"}[1m])) > 1
+        for: 0m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [PostgreSQL运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMIrz8V0UeTYuhJoQd0c?scode=AE8AMgffABAN4ELLgRAWgAfQZAAJk)
+        annotations:
+          summary: 【P1】PG 集群发生主从切换
+          description: PGSQL 集群发生主从切换，请及时查看 PGSQL 集群状态
+      - alert: 死锁数（PGSQL）
+        expr: increase(pg_stat_database_deadlocks[1m])>1
+        for: 3m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [PostgreSQL运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIMIrz8V0UeTYuhJoQd0c?scode=AE8AMgffABAN4ELLgRAWgAfQZAAJk)
+        annotations:
+          summary: 死锁数（PGSQL）
+          description: 死锁数 > 1Count，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: CPU使用率（Redis）
+        expr: sum(rate(container_cpu_usage_seconds_total{pod=~"haproxy.*",container="haproxy"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores) by (cluster, namespace, pod, container) * 100 > 40
+        for: 5m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: CPU使用率（Redis）
+          description: CPU使用率 > 40%，当前值为 {{ $value }}%，统计粒度5秒，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 【P1】核心 Redis 告警- Proxy 节点（多维 CPU 使用率）
+        expr: sum(rate(container_cpu_usage_seconds_total{pod=~"haproxy.*",container="haproxy"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores) by (cluster, namespace, pod, container) * 100 > 90
+        for: 5m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: 【P1】核心 Redis 告警 - Proxy 节点（多维 CPU 使用率）
+          description: CPU使用率 > 90%，当前值为 {{ $value }}%，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: CPU 使用率（Redis）
+        expr: sum(rate(container_cpu_usage_seconds_total{pod=~"redis-node.*",container="redis"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores) by (cluster, namespace, pod, container) * 100 > 60
+        for: 3m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: CPU 使用率（Redis）
+          description: CPU 使用率 > 60%，当前值为 {{ $value }}%，统计粒度5秒，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 内存使用率（Redis）
+        expr: sum (container_memory_working_set_bytes{pod=~"redis-node.*",container="redis"}) by (container,pod,namespace)/ sum(container_spec_memory_limit_bytes{pod=~"redis-node.*",container="redis"}) by (container,pod,namespace) * 100 > 75
+        for: 3m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: 内存使用率（Redis）
+          description: 内存使用率 > 75%，当前值为 {{ $value }}%，统计粒度5秒，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 连接使用率（Redis）
+        expr: sum(redis_connected_clients) by (instance,pod,namespace,container) / sum(redis_config_maxclients{}) by (instance,pod,namespace,container) * 100 > 40
+        for: 3m
+        labels:
+          level: P3
+          group: PaaS
+          severity: 预警
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: 连接使用率（Redis）
+          description: 连接使用率 > 40%，当前值为 {{ $value }}%，统计粒度5秒，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 【P1】核心 Redis 告警 - Redis节点（多维 CPU 使用率）
+        expr: sum(rate(container_cpu_usage_seconds_total{pod=~"redis-node.*",container="redis"}[1m])) by (cluster, namespace, pod, container) / sum(kube_pod_container_resource_limits_cpu_cores) by (cluster, namespace, pod, container) * 100 > 90
+        for: 3m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: 【P1】核心 Redis 告警 - Redis 节点（多维 CPU 使用率）
+          description: CPU 使用率 > 90%，当前值为 {{ $value }}%, 统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: 【P1】核心 Redis 告警 - Redis 节点（多维内存使用率）
+        expr: sum (container_memory_working_set_bytes{pod=~"redis-node.*",container="redis"}) by (container,pod,namespace)/ sum(container_spec_memory_limit_bytes{pod=~"redis-node.*",container="redis"}) by (container,pod,namespace)  * 100 > 90
+        for: 3m
+        labels:
+          level: P1
+          group: PaaS
+          severity: 告警
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: 【P1】核心 Redis 告警 - Redis 节点（多维内存使用率）
+          description: 内存使用率 > 90%，当前值为 {{ $value }}%，统计粒度1分钟，请确认 {{ $labels.namespace }} 空间下的 {{ $labels.pod }} 容器
+      - alert: RedisMissingMaster
+        expr: (count(redis_instance_info{role="master"})) < 1
+        for: 1m
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P1
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: Redis 集群缺少主控 Master
+          description: "Redis 集群没有 master 的节点，初步分析 master 节点可能下线，请关注集群是否选举了新的 master 角色，如长时间无法选举新的 master 角色，请重启所有 redis 副本"
+      - alert: RedisTooManyMasters
+        expr: count(redis_instance_info{role="master",redis_mode="standalone"}) > 1
+        for: 2m
+        labels:
+          severity: 告警
+          group: PaaS
+          level: P1
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+        annotations:
+          summary: Redis 集群主控太多，可能发生脑裂
+          description: "Redis 集群主控太多，可能发生脑裂，当前 master 节点数量为 {{ $value }}。请检测是否有业务 redis 请求异常，如 session-service 或者 功能异常，如登陆失效！！！可尝试重启 haproxy 解决问题。"
+      - alert: Redis 哨兵集群触发选举
+        expr: count(changes(redis_instance_info{role="master"}[1m])) by (namespace) > 1
+        for: 0s
+        labels:
+          severity: 预警
+          group: PaaS
+          level: P3
+          members: xiao
+          help_url: |-
+            [Redis运维文档](https://doc.weixin.qq.com/doc/w3_AS0AwAbZAIM4cJ6kKxMTIC3gPHDT2?scode=AE8AMgffABANnLRIW5AWgAfQZAAJk)
+            如发现业务访问存在异常，请检测是否有业务 redis 请求异常，如 session-service 、platform-service 等服务是否异常，如登陆失效！！！
+            紧急情况可尝试重启 haproxy 代理触发所有客户端重新连接，具体指令为： kubectl rollout restart deployment/haproxy -n coding
+        annotations:
+          summary: Redis 哨兵集群触发选举（主从切换）
+          description: "{{ $labels.namespace }} 空间的 Redis 集群中，主节点发生异常，触发选举（主从切换），主从切换为哨兵模式常规的故障转移！"
