@@ -1,4 +1,4 @@
-package csvfile
+package excelfile
 
 import (
 	"encoding/json"
@@ -20,7 +20,7 @@ func init() {
 	flag.StringVar(&outFile, "out", "", "/path/to/output.csv (optional; default is stdout)")
 }
 
-//go test -v genExecl_test.go -in alert.yaml -out alert_rules.xlsx
+//go test -v genExecl_test.go -in alert.tpl -out alert_rules.xlsx
 func Test_yaml2excel(t *testing.T) {
 	JsonToExcel(common.YamlToJson(yamlFile))
 }

@@ -3,3 +3,4 @@ dist
 vcs.xml
 Doraemon.iml
 *.sql
+tmp
